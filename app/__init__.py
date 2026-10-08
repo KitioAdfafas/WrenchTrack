@@ -2,7 +2,7 @@ import os
 
 from flask import Flask
 
-from . import db
+from . import auth, db
 
 
 def create_app():
@@ -22,6 +22,7 @@ def create_app():
     os.makedirs(app.instance_path, exist_ok=True)
 
     db.init_app(app)
+    auth.init_app(app)
 
     @app.route("/health")
     def health():
