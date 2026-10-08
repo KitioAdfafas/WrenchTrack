@@ -2,6 +2,8 @@ import os
 
 from flask import Flask
 
+from . import db
+
 
 def create_app():
     app = Flask(__name__, instance_relative_config=True)
@@ -18,6 +20,8 @@ def create_app():
     )
 
     os.makedirs(app.instance_path, exist_ok=True)
+
+    db.init_app(app)
 
     @app.route("/health")
     def health():
