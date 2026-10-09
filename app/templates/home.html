@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+    <h1>WrenchTrack</h1>
+    {% if g.user %}
+        <p>Logged in as {{ g.user["username"] }}. The job list arrives on Day 2.</p>
+    {% else %}
+        <p>You are not logged in. <a href="{{ url_for('auth.login') }}">Log in</a></p>    
+    {% endif %}
+{% endblock %}        

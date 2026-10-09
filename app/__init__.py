@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask
+from flask import Flask, render_template
 
 from . import auth, db
 
@@ -17,12 +17,17 @@ def create_app():
     app.config.from_mapping(
         SECRET_KEY=secret_key,
         DATABASE=os.path.join(app.instance_path, "wrenchtrack.sqlite"),
+        SESSION_COOKIE_SAMESITE="Lax",
     )
 
     os.makedirs(app.instance_path, exist_ok=True)
 
     db.init_app(app)
     auth.init_app(app)
+
+    @app.route("/")
+    def home():
+        return render_template("home.html")
 
     @app.route("/health")
     def health():

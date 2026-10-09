@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}{% endblock %} - WrenchTrack</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css')}}">
+</head>
+<body>
+    <nav>
+        <a  class="brand" href="{{ url_for('home') }}">WrenchTrack</a>
+        {% if g.user %}
+            <span>{{ g.user["username"] }}</span>    
+            <form method="post" action="{{ url_for('auth.logout') }}">
+                <button type="submit">Log Out</button>
+            </form>
+        {% endif %}    
+    </nav>
+    <main>
+        {% for message in get_flashed_messages() %}
+            <div class="flash">{{ message }}</div>
+        {% endfor %}
+        {% block content%}{% endblock %}    
+    </main>
+</body>
+</html>

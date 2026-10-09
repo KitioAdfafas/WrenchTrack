@@ -1,0 +1,35 @@
+body {
+    font-family: system-ui, sans-serif;
+    max-width: 40rem;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+nav {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 0.5rem;
+}
+
+.brand {
+    font-weight: bold;
+}
+
+nav form {
+    margin: 0 0 0 auto;
+}
+
+form {
+    display: grid;
+    gap: 0.5rem;
+    max-width: 20rem;
+}
+
+.flash {
+    background: #fde8e8;
+    border: 1px solid #e0a0a0;
+    padding: 0.5rem;
+    margin: 1rem 0;
+}
