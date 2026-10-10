@@ -17,6 +17,8 @@ from .db import get_db
 
 bp = Blueprint("auth",__name__)
 
+PUBLIC_ENDPOINTS = {"auth.login", "health", "static"}
+
 @click.command("create-user")
 @click.argument("username")
 @click.password_option()
@@ -51,8 +53,16 @@ def load_logged_in_user():
             "SELECT id, username FROM users WHERE id = ?", (user_id,)
         ).fetchone()
 
+@bp.before_app_request
+def require_login():
+    if g.user is None and request.endpoint not in PUBLIC_ENDPOINTS:
+        return redirect(url_for("auth.login"))
+
 @bp.route("/login", methods=("GET", "POST"))
 def login():
+    if g.user is not None:
+        return redirect(url_for("home"))
+
     if request.method == "POST":
         username = request.form["username"].strip()
         password = request.form["password"]
