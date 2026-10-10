@@ -1,8 +1,8 @@
 import os
 
-from flask import Flask, render_template
+from flask import Flask, redirect, url_for
 
-from . import auth, db
+from . import auth, db, jobs
 
 
 def create_app():
@@ -24,10 +24,11 @@ def create_app():
 
     db.init_app(app)
     auth.init_app(app)
+    app.register_blueprint(jobs.bp)
 
     @app.route("/")
     def home():
-        return render_template("home.html")
+        return redirect(url_for("jobs.index"))
 
     @app.route("/health")
     def health():
