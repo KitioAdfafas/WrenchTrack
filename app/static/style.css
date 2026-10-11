@@ -1,6 +1,6 @@
 body {
     font-family: system-ui, sans-serif;
-    max-width: 40rem;
+    max-width: 60rem;
     margin: 0 auto;
     padding: 1rem;
 }
@@ -24,7 +24,16 @@ nav form {
 form {
     display: grid;
     gap: 0.5rem;
-    max-width: 20rem;
+    max-width: 24rem;
+}
+
+input,
+select,
+textarea {
+    width: 100%;
+    box-sizing: border-box;
+    font: inherit;
+    padding: 0.4rem;
 }
 
 .flash {
@@ -32,4 +41,21 @@ form {
     border: 1px solid #e0a0a0;
     padding: 0.5rem;
     margin: 1rem 0;
+}
+
+.flash.ok {
+    background: #e6f4ea;
+    border-color: #9fcfae
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th,
+td {
+    text-align: left;
+    padding: 0.4rem 0.6 rem;
+    border-bottom: 1px solid #ddd;
 }

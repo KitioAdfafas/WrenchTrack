@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Add job{% endblock %}
+
+{% block content%}
+<h1>Add job</h1>
+<form method="post">
+    <label for="customer_name">Customer name</label>
+    <input name="customer_name" id="customer_name" value="{{ form['customer_name']}}" required autofocus>
+
+    <label for="phone">Phone</label>
+    <input name="phone" id="phone" value="{{ form['phone']}}" required>
+
+    <label for="make">Make</label>
+    <input name="make" id="make" value="{{ form['make']}}" required>
+
+    <label for="model">Model</label>
+    <input name="model" id="model" value="{{ form['model']}}" required>
+
+    <label for="year">Year</label>
+    <input name="year" id="year" value="{{ form['year']}}" required>
+
+    <label for="plate">Plate</label>
+    <input name="plate" id="plate" value="{{ form['plate']}}" required>
+
+    <label for="vin">VIN (optional)</label>
+    <input name="vin" id="vin" value="{{ form['vin']}}">
+
+    <label for="mileage">Mileage(km)</label>
+    <input type="number" name="mileage" id="mileage" value="{{ form['mileage']}}" required>
+
+    <label for="engine">Engine</label>
+    <input name="engine" id="engine" value="{{ form['engine'] }}">
+
+    <label for="fuel_type">Fuel type</label>
+    <select name="fuel_type" id="fuel_type" required>
+        {% for fuel in fuel_types %}
+        <option value="{{ fuel }}" {% if form['fuel_type'] == fuel %}selected{% endif %}>{{ fuel }}</option>
+        {% endfor %}
+    </select>
+
+    <label for="date_received">Date received</label>
+    <input type="date" name="date_received" id="date_received" value="{{ form['date_received']}}" required>
+
+    <label for="problem">Problem described by the customer</label>
+    <textarea name="problem" id="problem" rows="4" required>{{ form['problem'] }}</textarea>
+
+    <button type="submit">Save job</button>
+</form>
+{% endblock %}

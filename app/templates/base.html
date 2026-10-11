@@ -10,6 +10,8 @@
     <nav>
         <a  class="brand" href="{{ url_for('home') }}">WrenchTrack</a>
         {% if g.user %}
+        <a href="{{ url_for('jobs.index') }}">Jobs</a>
+        <a href="{{ url_for('jobs.new') }}">New job</a>
             <span>{{ g.user["username"] }}</span>    
             <form method="post" action="{{ url_for('auth.logout') }}">
                 <button type="submit">Log Out</button>
@@ -17,8 +19,8 @@
         {% endif %}    
     </nav>
     <main>
-        {% for message in get_flashed_messages() %}
-            <div class="flash">{{ message }}</div>
+        {% for category, message in get_flashed_messages(with_categories=true) %}
+            <div class="flash {{ category }}">{{ message }}</div>
         {% endfor %}
         {% block content%}{% endblock %}    
     </main>
