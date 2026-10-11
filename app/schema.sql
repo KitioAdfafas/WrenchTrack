@@ -26,7 +26,7 @@ CREATE TABLE jobs (
         CHECK (fuel_type IN ('petrol', 'diesel', 'hybrid', 'electric')),
     problem TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'Received'
-        CHECK (status IN ('Received', 'Diagnosnig', 'Waiting for parts', 'Repairing', 'Ready', 'Picked up')),
+        CHECK (status IN ('Received', 'Diagnosing', 'Waiting for parts', 'Repairing', 'Ready', 'Picked up')),
     date_received TEXT NOT NULL,
     labor_cost REAL NOT NULL DEFAULT 0,
     status_changed_at TEXT NOT NULL DEFAULT (datetime('now')),    

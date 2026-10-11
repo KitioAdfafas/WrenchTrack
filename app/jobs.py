@@ -1,12 +1,30 @@
 from datetime import date
 
-from flask import Blueprint, flash, g, redirect, render_template, request, url_for
+from flask import (
+    Blueprint, 
+    abort,
+    flash, 
+    g,
+    redirect,
+    render_template,
+    request,
+    url_for,
+)
 
 from .db import get_db
 
 bp = Blueprint("jobs", __name__, url_prefix="/jobs")
 
 FUEL_TYPES = ["petrol", "diesel", "hybrid", "electric"]
+
+STATUSES = [
+    "Received",
+    "Diagnosing",
+    "Waiting for parts",
+    "Repairing",
+    "Ready",
+    "Picked up"
+]
 
 REQUIRED_FIELDS = [
     "customer_name",
@@ -21,7 +39,20 @@ REQUIRED_FIELDS = [
     "date_received",
 ]
 
+def next_status(status):
+    """Return the status that follows this one, or None if it is the last."""
+    position = STATUSES.index(status)
+    if position == len(STATUSES) - 1:
+        return None
+    return STATUSES[position + 1]
 
+def get_job_or_404(job_id):
+    job = get_db().execute("SELECT * FROM jobs WHERE id = ?",
+    (job_id,)).fetchone()
+    if job is None:
+        abort(404)
+    return job
+    
 def read_job_form(form):
     """Clean the submitted form. Returns (values, error). error is None if valid."""
     values = {
@@ -71,7 +102,8 @@ def index():
         "SELECT id, plate, make, model, customer_name, status, date_received "
         "FROM jobs ORDER BY id DESC"
     ).fetchall()
-    return render_template("jobs/index.html", jobs=jobs)
+    return render_template("jobs/index.html", jobs=jobs,
+    next_status=next_status)
 
 
 @bp.route("/new", methods=("GET", "POST"))
@@ -114,3 +146,53 @@ def new():
         }
 
     return render_template("jobs/new.html", form=form, fuel_types=FUEL_TYPES)
+
+@bp.route("/<int:job_id>")
+def detail(job_id):
+    job = get_job_or_404(job_id)
+    notes = get_db().execute(
+        "SELECT body, created_at FROM notes WHERE job_id = ? ORDER BY id DESC",
+        (job_id,),
+    ).fetchall()
+    return render_template(
+        "jobs/detail.html",
+        job=job,
+        notes=notes,
+        next_label=next_status(job["status"]),
+    )
+
+@bp.route("/<int:job_id>/advance", methods=("POST",))
+def advance(job_id):
+    job = get_job_or_404(job_id)
+    following = next_status(job["status"])
+
+    if following is None:
+        flash("This job is already picked up.")
+    else:
+        db = get_db()
+        db.execute(
+            "UPDATE jobs SET status = ?, status_changed_at = datetime('now') "
+            "WHERE id = ?",
+            (following, job_id),
+        )    
+        db.commit()
+
+    if request.form.get("back") == "detail":
+        return redirect(url_for("jobs.detail", job_id=job_id))
+    return redirect(url_for("jobs.index"))   
+
+@bp.route("/<int:job_id>/notes", methods=("POST",))
+def add_note(job_id):
+    get_job_or_404(job_id)
+    body = request.form.get("body", "").strip()
+
+    if not body:
+        flash("A note cannot be empty.") 
+    else:
+        db = get_db()
+        db.execute("INSERT INTO notes (job_id, body) VALUES (?, ?)", (job_id, body)) 
+        db.commit()
+        flash("Note added.", "ok")
+
+    return redirect(url_for("jobs.detail", job_id=job_id))                                     
+        

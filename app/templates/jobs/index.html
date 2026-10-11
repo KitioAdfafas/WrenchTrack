@@ -11,6 +11,7 @@
       <th>Customer</th>
       <th>Status</th>
       <th>Received</th>
+      <th>Next step</th>
     </tr>
   </thead>
   <tbody>
@@ -21,6 +22,15 @@
       <td>{{ job["customer_name"] }}</td>
       <td>{{ job["status"] }}</td>
       <td>{{ job["date_received"] }}</td>
+      <td>
+        {% set following = next_status(job["status"]) %}
+        {% if following %}
+          <form class="inline-form" method="post" action="{{ url_for('jobs.advance', job_id=job['id'] )}}">
+            <input type="hidden" name="back" value="list">
+            <button type="submit">Move to {{ following }}</button>
+          </form>
+        {% endif %}  
+      </td>
     </tr>
     {% endfor %}
   </tbody>

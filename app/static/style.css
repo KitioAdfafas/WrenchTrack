@@ -27,6 +27,12 @@ form {
     max-width: 24rem;
 }
 
+.inline-form {
+    display: inline;
+    max-width: none;
+    margin: 0;
+}
+
 input,
 select,
 textarea {
@@ -58,4 +64,62 @@ td {
     text-align: left;
     padding: 0.4rem 0.6 rem;
     border-bottom: 1px solid #ddd;
+}
+
+.status {
+    display: inline-block;
+    padding: 0.1rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    background: #eee;
+}
+
+.status-received {
+    background: #e3e8f0;
+}
+
+.status-diagnosing {
+    background: #fff3cd;
+}
+
+.status-waiting-for-parts {
+    background: #ffe0b2;
+}
+
+.status-repairing {
+    background: #d6e4ff;
+}
+
+.status-ready {
+    background: #d4edda;
+}
+
+.status-picked-up {
+    background: #e2e2e2;
+    color: #555;
+}
+
+dl {
+    display: grid;
+    grid-template-columns: 10rem 1fr;
+    gap: 0.3rem 1rem;
+}
+
+dt {
+    font-weight: bold;
+}
+
+dd {
+    margin: 0;
+}
+
+.note {
+    border-left: 3px solid #ccc;
+    padding-left: 0.8rem;
+    margin: 1rem 0;
+}
+
+.note p {
+    margin: 0.2rem 0 0;
+    white-space: pre-wrap;
 }
