@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}{{ job["plate"] }}{% endblock %}
+
+{% block content %}
+    <p><a href="{{ url_for('jobs.index') }}">Back to jobs</a></p>
+    <h1>{{ job["plate"] }}, {{ job["make"] }} {{ job["model"] }}</h1>
+
+    <p>
+        <span class="status status-{{ job['status']|lower|replace(' ','-') }}">{{ job["status"]}}</span>
+        {% if next_label  %}
+            <form class="inline-form" method="post" action="{{ url_for('jobs.advance', job_id=job['id']) }}">
+                <input type="hidden" name="bacl" value="detail">
+                <button type="submit">Move to {{ next_label }}</button>
+            </form>
+        {% endif %}    
+    </p>
+
+    <dl>
+        <dt>Customer</dt>
+        <dd>{{ job["customer_name"] }}</dd>
+        <dt>Phone</dt>
+        <dd>{{ job["phone"] }}</dd>
+        <dt>Car</dt>
+        <dd>{{ job["make"] }} {{ job["model"] }}, {{ job["year"]}}</dd>
+        <dt>Engine</dt>
+        <dd>{{ job["engine"] or "not given" }} {{ job["fuel_type"] }}</dd>
+        <dt>VIN</dt>
+        <dd>{{ job["vin"] or "not given" }}</dd>
+        <dt>Mileage</dt>
+        <dd>{{ job["mileage"] }} km</dd>
+        <dt>Date received</dt>
+        <dd>{{ job["date_received"] }}</dd>
+        <dt>Problem</dt>
+        <dd>{{ job["problem"] }}</dd>
+    </dl>
+
+    <h2>Notes</h2>
+    <form method="post" action="{{ url_for('jobs.add_note', job_id=job['id'])}}">
+        <label for="body">Add a note</label>
+        <textarea name="body" id="body" rows="3" required></textarea>   
+        <button type="submit">Add note</button>     
+    </form>
+    
+    {% for note in notes %}
+        <div class="note">
+            <small>{{ note["created_at"] }} UTC</small>
+            <p>{{ note["body"] }}</p>
+        </div>
+    {% else %}
+        <p>No notes yet.</p> 
+    {% endfor %}       
+{% endblock %}    
