@@ -17,10 +17,10 @@
   <tbody>
     {% for job in jobs %}
     <tr>
-      <td>{{ job["plate"] }}</td>
+      <td><a href="{{ url_for('jobs.detail', job_id=job['id']) }}">{{ job["plate"] }}</a></td>
       <td>{{ job["make"] }} {{ job["model"] }}</td>
       <td>{{ job["customer_name"] }}</td>
-      <td>{{ job["status"] }}</td>
+      <td><span class="status status-{{ job['status']|lower|replace(' ', '-') }}">{{ job["status"] }}</span></td>
       <td>{{ job["date_received"] }}</td>
       <td>
         {% set following = next_status(job["status"]) %}

@@ -10,7 +10,7 @@
         <span class="status status-{{ job['status']|lower|replace(' ','-') }}">{{ job["status"]}}</span>
         {% if next_label  %}
             <form class="inline-form" method="post" action="{{ url_for('jobs.advance', job_id=job['id']) }}">
-                <input type="hidden" name="bacl" value="detail">
+                <input type="hidden" name="back" value="detail">
                 <button type="submit">Move to {{ next_label }}</button>
             </form>
         {% endif %}    
