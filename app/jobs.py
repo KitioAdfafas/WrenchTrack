@@ -98,13 +98,40 @@ def read_job_form(form):
 
 @bp.route("/")
 def index():
-    jobs = get_db().execute(
-        "SELECT id, plate, make, model, customer_name, status, date_received "
-        "FROM jobs ORDER BY id DESC"
-    ).fetchall()
-    return render_template("jobs/index.html", jobs=jobs,
-    next_status=next_status)
+    q = request.args.get("q", "").strip()
+    status = request.args.get("status", "").strip()
 
+    sql = (
+        "SELECT id, plate, make, model, customer_name, status, date_received "
+        "FROM jobs"
+    )
+    conditions = []
+    params = []
+
+    if q:
+        like = f"%{q}%"
+        conditions.append(
+            "(plate LIKE ? OR customer_name LIKE ? OR make LIKE ? OR model LIKE ?)"
+        )
+        params.extend([like, like, like, like])
+
+    if status in STATUSES:
+        conditions.append("status = ?")
+        params.append(status)
+
+    if conditions:
+        sql += " WHERE " + " AND ".join(conditions)
+    sql += " ORDER BY id DESC"
+
+    jobs = get_db().execute(sql, params).fetchall()
+    return render_template(
+        "jobs/index.html",
+        jobs=jobs,
+        next_status=next_status,
+        q=q,
+        status=status,
+        statuses=STATUSES,
+    )            
 
 @bp.route("/new", methods=("GET", "POST"))
 def new():

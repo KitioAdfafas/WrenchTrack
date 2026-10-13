@@ -2,6 +2,22 @@
 <h1>Jobs</h1>
 <p><a href="{{ url_for('jobs.new') }}">Add job</a></p>
 
+<form method="get" action="{{ url_for('jobs.index') }}">
+  <label for="q">Search plate, customer or car</label>
+  <input name="q" id="q" value="{{ q }}">
+
+  <label for="status">Status</label>
+  <select name="status" id="status">
+    <option value="">All statuses</option>
+    {% for s in statuses %}
+    <option value="{{ s }}" {% if status == s %}selected{% endif %}>{{ s }}</option>
+    {% endfor %}
+  </select>
+
+  <button type="submit">Search</button>
+  <a href="{{ url_for('jobs.index') }}">Clear</a>
+</form>
+
 {% if jobs %}
 <table>
   <thead>
@@ -36,5 +52,5 @@
   </tbody>
 </table>
 {% else %}
-<p>No jobs yet.</p>
+<p>{% if q or status %}No jobs match your search.{% else %}No jobs yet.{% endif %}</p>
 {% endif %} {% endblock %}
