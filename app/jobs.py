@@ -161,6 +161,18 @@ def detail(job_id):
         next_label=next_status(job["status"]),
     )
 
+@bp.route("/<int:job_id>/edit")
+def edit(job_id):
+    job = get_job_or_404(job_id)
+    form = {key: ("" if value is None else value) for key, value in dict(job).items()}
+    return render_template(
+        "jobs/new.html",
+        form=form,
+        fuel_types=FUEL_TYPES,
+        heading="Edit job",
+        button="Save changes",
+    )
+
 @bp.route("/<int:job_id>/advance", methods=("POST",))
 def advance(job_id):
     job = get_job_or_404(job_id)

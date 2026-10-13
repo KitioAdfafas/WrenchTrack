@@ -3,7 +3,7 @@
 {% block title %}{{ job["plate"] }}{% endblock %}
 
 {% block content %}
-    <p><a href="{{ url_for('jobs.index') }}">Back to jobs</a></p>
+    <p><a href="{{ url_for('jobs.index') }}">Back to jobs</a> | <a href="{{ url_for('jobs.edit', job_id=job['id']) }}">Edit job</a></p>
     <h1>{{ job["plate"] }}, {{ job["make"] }} {{ job["model"] }}</h1>
 
     <p>

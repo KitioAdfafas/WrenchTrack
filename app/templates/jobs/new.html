@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 
-{% block title %}Add job{% endblock %}
+{% block title %}{{ heading|default("Add job") }}{% endblock %}
 
 {% block content%}
-<h1>Add job</h1>
+<h1>{{ heading|default("Add job") }}</h1>
 <form method="post">
     <label for="customer_name">Customer name</label>
     <input name="customer_name" id="customer_name" value="{{ form['customer_name']}}" required autofocus>
@@ -45,6 +45,6 @@
     <label for="problem">Problem described by the customer</label>
     <textarea name="problem" id="problem" rows="4" required>{{ form['problem'] }}</textarea>
 
-    <button type="submit">Save job</button>
+    <button type="submit">{{ button|default("Save job") }}</button>
 </form>
 {% endblock %}
