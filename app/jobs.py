@@ -161,10 +161,44 @@ def detail(job_id):
         next_label=next_status(job["status"]),
     )
 
-@bp.route("/<int:job_id>/edit")
+@bp.route("/<int:job_id>/edit", methods=("GET", "POST"))
 def edit(job_id):
     job = get_job_or_404(job_id)
-    form = {key: ("" if value is None else value) for key, value in dict(job).items()}
+    if request.method == "POST":
+        values, error = read_job_form(request.form)
+
+        if error is None:
+            db = get_db()
+            db.execute(
+                "UPDATE jobs SET customer_name = ?, phone = ?, make = ?, model = ?,"
+                "year = ?, plate = ?, vin = ?, mileage = ?, engine = ?, "
+                "fuel_type = ?, problem = ?, date_received = ? "
+                "WHERE id = ?",
+                (
+                    values["customer_name"],
+                    values["phone"],
+                    values["make"],
+                    values["model"],
+                    int(values["year"]),
+                    values["plate"],
+                    values["vin"] or None,
+                    int(values["mileage"]),
+                    values["engine"] or None,
+                    values["fuel_type"],
+                    values["problem"],
+                    values["date_received"],
+                    job_id,
+                ),
+            )
+            db.commit()
+            flash("Job updated.", "ok")
+            return redirect(url_for("jobs.detail", job_id=job_id))
+
+        flash(error)
+        form = values
+    else:
+        form = {key: ("" if value is None else value) for key, value in dict(job).items()}    
+
     return render_template(
         "jobs/new.html",
         form=form,
