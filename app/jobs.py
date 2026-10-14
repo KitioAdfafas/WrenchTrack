@@ -1,3 +1,4 @@
+import difflib
 from datetime import date
 
 from flask import (
@@ -95,6 +96,46 @@ def read_job_form(form):
 
     return values, None
 
+ALIAS_GROUPS = [
+    {"vw", "volkswagen"},
+    {"merc", "mercedes", "mercedes-benz", "benz"},
+    {"skoda", "skodaa"}
+]
+
+TERM_TO_GROUP = {}
+for group in ALIAS_GROUPS:
+    for term in group:
+        TERM_TO_GROUP[term] = group
+
+
+def can_fuzzy(word):
+    """Typo tolerance only for words of 4+ characters without digits."""
+    return len(word) >= 4 and not any(ch.isdigit() for ch in word)
+
+def word_variants(word):
+    """Return the spellings to look for: the word itself plus its aliases."""
+    if word in TERM_TO_GROUP:
+        return set(TERM_TO_GROUP[word])
+    if can_fuzzy(word):
+        close = difflib.get_close_matches(word, TERM_TO_GROUP.keys(), n=1, cutoff=0.8)
+        if close:
+            return set(TERM_TO_GROUP[close[0]])
+    return {word}
+
+def job_matches(job, words):
+    """True if every search word is found in the job (alias, substring or typo)."""    
+    haystack = " ".join(
+        [job["plate"], job["customer_name"], job["make"], job["model"]]
+    ).casefold()
+    tokens = haystack.replace("-", " ").split()
+
+    for word in words:
+        if any(variant in haystack for variant in word_variants(word)):
+            continue
+        if can_fuzzy(word) and difflib.get_close_matches(word, tokens, n=1, cutoff=0.8):
+            continue
+        return False
+    return True
 
 @bp.route("/")
 def index():
@@ -108,13 +149,6 @@ def index():
     conditions = []
     params = []
 
-    if q:
-        like = f"%{q}%"
-        conditions.append(
-            "(plate LIKE ? OR customer_name LIKE ? OR make LIKE ? OR model LIKE ?)"
-        )
-        params.extend([like, like, like, like])
-
     if status in STATUSES:
         conditions.append("status = ?")
         params.append(status)
@@ -124,6 +158,11 @@ def index():
     sql += " ORDER BY id DESC"
 
     jobs = get_db().execute(sql, params).fetchall()
+
+    words = q.casefold().split()
+    if words:
+        jobs = [job for job in jobs if job_matches(job, words)]
+
     return render_template(
         "jobs/index.html",
         jobs=jobs,
