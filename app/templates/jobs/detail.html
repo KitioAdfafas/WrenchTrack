@@ -35,6 +35,42 @@
         <dd>{{ job["problem"] }}</dd>
     </dl>
 
+    <h2>Fault codes</h2>
+    <form method="post" action="{{ url_for('jobs.add_fault_code', job_id=job['id']) }}">
+        <label for="code">Code</label>
+        <input name="code" id="code" maxlength="20" placeholder="P0087" required>
+
+        <label for="description">Description</label>
+        <input name="description" id="description" maxlength="200">
+
+        <button type="submit">Add code</button>
+    </form>
+
+    {% if fault_codes %}
+    <table>
+        <thead>
+            <tr><th>Code</th><th>Description</th><th></th></tr>
+        </thead>
+        <tbody>
+            {% for fc in fault_codes %}
+            <tr>
+                <td>{{ fc["code"] }}</td>
+                <td>{{ fc["description"] or "" }}</td>
+                <td>
+                    <form class="inline-form" method="post"
+                          action="{{ url_for('jobs.delete_fault_code', job_id=job['id'], code_id=fc['id']) }}"
+                          onsubmit="return confirm('Remove this fault code?')">
+                        <button type="submit">Remove</button>  
+                        </form>         
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {%  else %}
+    <p>No fault codes yet</p>
+    {% endif %}
+
     <h2>Notes</h2>
     <form method="post" action="{{ url_for('jobs.add_note', job_id=job['id'])}}">
         <label for="body">Add a note</label>
