@@ -3,7 +3,7 @@
 {% block title %}{{ job["plate"] }}{% endblock %}
 
 {% block content %}
-    <p><a href="{{ url_for('jobs.index') }}">Back to jobs</a> | <a href="{{ url_for('jobs.edit', job_id=job['id']) }}">Edit job</a></p>
+    <p><a href="{{ url_for('jobs.index') }}">Back to jobs</a> | <a href="{{ url_for('jobs.edit', job_id=job['id']) }}">Edit job</a> <a href="{{ url_for('jobs.print_ticket', job_id=job['id']) }}" target="_blank">Print ticket</a></p>
     <h1>{{ job["plate"] }}, {{ job["make"] }} {{ job["model"] }}</h1>
 
     <p>
@@ -88,7 +88,7 @@
     {% if parts %}
     <table>
         <thead>
-            <tr><th>Part</th><th>Qty</th><th>Price each</th><th>Line total</th></tr>
+            <tr><th>Part</th><th>Qty</th><th>Price each</th><th>Line total</th><th></th></tr>
         </thead>
         <tbody>
             {% for part in parts  %}
@@ -97,6 +97,13 @@
                 <td>{{ part["quantity"] }}</td>
                 <td>{{ "%.2f"|format(part["price"]) }}</td>
                 <td>{{ "%.2f"|format(part["quantity"] * part["price"]) }}</td>
+                <td>
+                    <form class="inline-form" method="post"
+                    action="{{ url_for('jobs.delete_part', job_id=job['id'], part_id=part['id']) }}"
+                    onsubmit="return confirm('Remove this part?')">
+                   <button type="submit">Remove</button> 
+                </form>
+                </td>
             </tr>
             {% endfor %}
         </tbody> 
@@ -104,6 +111,23 @@
     {% else %}
     <p>No parts yet.</p>
     {% endif %}
+
+    <h2>Labor and total</h2>
+    <form method="post" action="{{ url_for('jobs.set_labor', job_id=job['id']) }}">
+        <label for="labor_cost">Labor cost</label>
+        <input type="number" name="labor_cost" id="labor_cost" step="0.01" min="0"
+                value="{{ '%.2f'|format(job['labor_cost']) }}" required>
+        <button type="submit">Save labor</button>        
+    </form>
+
+    <dl>
+        <dt>Parts</dt>
+        <dd>{{ "%.2f"|format(parts_total) }}</dd>
+        <dt>Labor</dt>
+        <dd>{{ "%.2f"|format("labor_cost") }}</dd>
+        <dt>Total</dt>
+        <dd><strong>{{ "%.2f"|format(total) }}</strong></dd>
+    </dl>
 
     <h2>Notes</h2>
     <form method="post" action="{{ url_for('jobs.add_note', job_id=job['id'])}}">

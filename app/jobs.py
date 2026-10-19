@@ -53,6 +53,12 @@ def get_job_or_404(job_id):
     if job is None:
         abort(404)
     return job
+
+def calculate_totals(job, parts):
+    """Return (parts_total, total), calculated from the stored rows."""
+    parts_total = round(sum(p["quantity"] * p["price"] for p in parts), 2)
+    total = round(parts_total + job["labor_cost"], 2)
+    return parts_total, total
     
 def read_job_form(form):
     """Clean the submitted form. Returns (values, error). error is None if valid."""
@@ -232,12 +238,16 @@ def detail(job_id):
         (job_id,),
     ).fetchall()
 
+    parts_total, total = calculate_totals(job, parts)
+
     return render_template(
         "jobs/detail.html",
         job=job,
         notes=notes,
         fault_codes=fault_codes,
         parts=parts,
+        parts_total=parts_total,
+        total=total,
         next_label=next_status(job["status"]),
     )
 
@@ -405,3 +415,66 @@ def add_part(job_id):
         flash("Part added.", "ok")
 
     return redirect(url_for("jobs.detail", job_id=job_id))                           
+
+@bp.route("/<int:job_id>/parts/<int:part_id>/delete", methods=("POST",))
+def delete_part(job_id, part_id):
+    get_job_or_404(job_id)
+    db = get_db()
+    cursor = db.execute(
+        "DELETE FROM parts WHERE id = ? AND job_id = ?",
+        (part_id, job_id),
+    )
+    db.commit()
+
+    if cursor.rowcount:
+        flash("Part removed.", "ok")
+    else:
+        flash("That part was not found.")
+
+    return redirect(url_for("jobs.detail", job_id=job_id))
+
+@bp.route("/<int:job_id>/labor", methods=("POST",))
+def set_labor(job_id):
+    get_job_or_404(job_id)
+    labor_text = request.form.get("labor_cost", "").strip()
+
+    try:
+        labor_cost = float(labor_text.replace(",","."))
+    except ValueError:
+        labor_cost = None
+
+    if labor_cost is None or not 0 <= labor_cost <= 100000:
+        flash("Labor cost must be a number between 0 and 100000.")      
+    else:
+        db = get_db()
+        db.execute(
+            "UPDATE jobs SET labor_cost = ? WHERE id = ?",
+            (round(labor_cost, 2), job_id),
+        )
+        db.commit()
+        flash("Labor cost saved.", "ok")
+
+    return redirect(url_for("jobs.detail", job_id=job_id))
+
+@bp.route("/<int:job_id>/print") 
+def print_ticket(job_id):
+    job = get_job_or_404(job_id)
+    db = get_db()
+    fault_codes = db.execute(
+        "SELECT code, description FROM fault_codes WHERE job_id = ? ORDER BY id",
+        (job_id,),
+    ).fetchall()
+    parts = db.execute(
+        "SELECT name, quantity, price FROM parts WHERE job_id = ? ORDER BY id",
+        (job_id,),
+    ).fetchall()
+    parts_total, total = calculate_totals(job, parts)
+
+    return render_template(
+        "jobs/print.html",
+        job=job,
+        fault_codes=fault_codes,
+        parts=parts,
+        parts_total=parts_total,
+        total=total,
+    )
