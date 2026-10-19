@@ -71,6 +71,40 @@
     <p>No fault codes yet</p>
     {% endif %}
 
+    <h2>Parts</h2>
+    <form method="post" action="{{ url_for('jobs.add_part', job_id=job['id']) }}">
+        <label for="part_name">Part name</label>
+        <input name="name" id="part_name" maxlength="100" required>
+
+        <label for="part_quantity">Quantity</label>
+        <input type="number" name="quantity" id="part_quantity" value="1" min="1" max="1000" required>
+
+        <label for="part_price">Price each</label>
+        <input type="number" name="price" id="part_price" step="0.01" min="0" required>
+
+        <button type="submit">Add part</button>
+    </form>
+
+    {% if parts %}
+    <table>
+        <thead>
+            <tr><th>Part</th><th>Qty</th><th>Price each</th><th>Line total</th></tr>
+        </thead>
+        <tbody>
+            {% for part in parts  %}
+            <tr>
+                <td>{{ part["name"] }}</td>
+                <td>{{ part["quantity"] }}</td>
+                <td>{{ "%.2f"|format(part["price"]) }}</td>
+                <td>{{ "%.2f"|format(part["quantity"] * part["price"]) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody> 
+    </table>
+    {% else %}
+    <p>No parts yet.</p>
+    {% endif %}
+
     <h2>Notes</h2>
     <form method="post" action="{{ url_for('jobs.add_note', job_id=job['id'])}}">
         <label for="body">Add a note</label>

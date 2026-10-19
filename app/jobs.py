@@ -221,6 +221,11 @@ def detail(job_id):
         (job_id,),
     ).fetchall()
 
+    parts = get_db().execute(
+        "SELECT id, name, quantity, price FROM parts WHERE job_id = ? ORDER BY id",
+        (job_id,),
+    ).fetchall()
+
     fault_codes = get_db().execute(
         "SELECT id, code, description, created_at FROM fault_codes "
         "WHERE job_id = ? ORDER BY id",
@@ -232,6 +237,7 @@ def detail(job_id):
         job=job,
         notes=notes,
         fault_codes=fault_codes,
+        parts=parts,
         next_label=next_status(job["status"]),
     )
 
@@ -361,4 +367,41 @@ def delete_fault_code(job_id, code_id):
     else:
         flash("That fault code was not found.")
 
-    return redirect(url_for("jobs.detail", job_id=job_id))        
+    return redirect(url_for("jobs.detail", job_id=job_id))    
+
+@bp.route("/<int:job_id>/parts", methods=("POST",))
+def add_part(job_id):
+    get_job_or_404(job_id)
+    name = request.form.get("name", "").strip()
+    quantity_text = request.form.get("quantity", "").strip()
+    price_text = request.form.get("price", "").strip()
+
+    error = None
+    if not name:
+        error = "A part needs a name."
+    elif len(name) > 100:
+        error = "The part name can be at most 100 characters."
+    else:
+        try:
+            quantity = int(quantity_text)
+            price = float(price_text.replace(",", "."))
+        except ValueError:
+            error = "Quantity must be a whole number and price must be a number."
+        else:
+            if not 1 <= quantity <= 1000:
+                error = "Quantity must be between 1 and 1000."
+            elif not 0 <= price <= 100000:
+                error = "Price must be between 0 and 100000."
+
+    if error:
+        flash(error)
+    else:
+        db = get_db()
+        db.execute(
+            "INSERT INTO parts (job_id, name, quantity, price) VALUES (?, ?, ?, ?)",
+            (job_id, name, quantity, price)
+        )
+        db.commit()
+        flash("Part added.", "ok")
+
+    return redirect(url_for("jobs.detail", job_id=job_id))                           
