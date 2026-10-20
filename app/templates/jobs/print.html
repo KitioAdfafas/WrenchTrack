@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Ticket {{ job["plate"]}}</title>
+        <style>
+            body { font-family: Arial, sans-serif; max-width: 700px; margin: 2rem auto; color: #000; }
+            table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; }
+            th, td { border: 1px solid #000; padding: 4px 8px; text-align: left; }
+            .no-print { margin-bottom: 1rem; }
+            @media print { .no-print { display: none; } }
+        </style>
+    </head>
+        <body>
+            <p class="no-print">
+                <button onclick="window.print()">Print</button>
+                <a href="{{ url_for('jobs.detail', job_id=job['id']) }}">Back to job</a>
+            </p>
+
+            <h1>Repair ticket #{{ job["id"] }}</h1>
+
+            <table>
+                <tr><th>Customer</th><td>{{ job["customer_name"] }}, {{ job["phone"] }}</td></tr>
+                <tr><th>Car</th><td>{{ job["make"] }} {{ job["model"] }}, {{ job["year"] }}</td></tr>
+                <tr><th>Plate</th><td>{{ job["plate"] }}</td></tr>
+                <tr><th>VIN</th><td>{{ job["vin"] or "not given"}}</td></tr>
+                <tr><th>Mileage</th><td>{{ job["mileage"] }} km</td></tr>
+                <tr><th>Date received</th><td>{{ job["date_received"] }}</td></tr>
+                <tr><th>Problem</th><td>{{ job["problem"] }}</td></tr>
+                <tr><th>Fault codes</th>
+                    <td>
+                        {% for fc in fault_codes %}
+                            {{ fc["code"] }}{% if fc["description"] %}: {{ fc["description"] }}{% endif %}<br>
+                        {% else %}
+                            none
+                        {% endfor %}        
+                    </td>
+                </tr>
+            </table>
+
+            {% if parts %}
+            <table>
+                <thead>
+                    <tr><th>Part</th><th>Qty</th><th>Price each</th><th>Line total</th></tr>
+                </thead>
+                <tbody>
+                    {% for part in parts %}
+                    <tr>
+                        <td>{{ part["name"] }}</td>
+                        <td>{{ part["quantity"] }}</td>
+                        <td>{{ "%.2f"|format(part["price"]) }}</td>
+                        <td>{{ "%.2f"|format(part["quantity"] * part["price"]) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>    
+            </table>
+            {% else %}
+            <p>No parts used.</p>
+            {% endif %}
+
+            <p>Parts: {{ "%.2f"|format(parts_total) }}</p>
+            <p>Labor: {{ "%.2f"|format(job["labor_cost"]) }}</p>
+            <h2>Total: {{ "%.2f"|format(total) }}</h2>
+        </body>
+</html>
