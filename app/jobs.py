@@ -149,7 +149,9 @@ def index():
     status = request.args.get("status", "").strip()
 
     sql = (
-        "SELECT id, plate, make, model, customer_name, status, date_received "
+        "SELECT id, plate, make, model, customer_name, status, date_received, "
+        "MAX(0, CAST(julianday(date('now')) - julianday(date_received) AS INTEGER)) "
+        "AS days_in_shop "
         "FROM jobs"
     )
     conditions = []
@@ -161,7 +163,8 @@ def index():
 
     if conditions:
         sql += " WHERE " + " AND ".join(conditions)
-    sql += " ORDER BY id DESC"
+    sql += " ORDER BY (status = ?), date_received, id"
+    params.append(STATUSES[-1])
 
     jobs = get_db().execute(sql, params).fetchall()
 

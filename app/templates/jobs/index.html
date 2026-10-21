@@ -27,6 +27,7 @@
       <th>Customer</th>
       <th>Status</th>
       <th>Received</th>
+      <th>Days</th>
       <th>Next step</th>
     </tr>
   </thead>
@@ -38,6 +39,7 @@
       <td>{{ job["customer_name"] }}</td>
       <td><span class="status status-{{ job['status']|lower|replace(' ', '-') }}">{{ job["status"] }}</span></td>
       <td>{{ job["date_received"] }}</td>
+      <td>{% if job["status"] == "Picked up" %}-{% else %}{{ job["days_in_shop"] }}{% endif %}</td>
       <td>
         {% set following = next_status(job["status"]) %}
         {% if following %}
