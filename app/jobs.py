@@ -128,15 +128,23 @@ def word_variants(word):
             return set(TERM_TO_GROUP[close[0]])
     return {word}
 
+def squash(text):
+    """Lowercase and keep only letters and digits, so SR-1234-AG becomes sr1234ag"""
+    return "".join(ch for ch in text.casefold() if ch.isalnum())
+
 def job_matches(job, words):
     """True if every search word is found in the job (alias, substring or typo)."""    
     haystack = " ".join(
         [job["plate"], job["customer_name"], job["make"], job["model"]]
     ).casefold()
     tokens = haystack.replace("-", " ").split()
+    plate_squashed = squash(job["plate"])
 
     for word in words:
         if any(variant in haystack for variant in word_variants(word)):
+            continue
+        squashed = squash(word)
+        if squashed and squashed in plate_squashed:
             continue
         if can_fuzzy(word) and difflib.get_close_matches(word, tokens, n=1, cutoff=0.8):
             continue
@@ -318,7 +326,13 @@ def advance(job_id):
 
     if request.form.get("back") == "detail":
         return redirect(url_for("jobs.detail", job_id=job_id))
-    return redirect(url_for("jobs.index"))   
+    return redirect(
+        url_for(
+            "jobs.index",
+            q=request.form.get("q") or None,
+            status=request.form.get("status") or None,
+        )
+    )   
 
 @bp.route("/<int:job_id>/notes", methods=("POST",))
 def add_note(job_id):

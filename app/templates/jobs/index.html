@@ -46,6 +46,8 @@
           <form class="inline-form" method="post" action="{{ url_for('jobs.advance', job_id=job['id'] )}}">
             {{ csrf_field() }}
             <input type="hidden" name="back" value="list">
+            <input type="hidden" name="q" value="{{ q }}">
+            <input type="hidden" name="status" value="{{ status }}">
             <button type="submit">Move to {{ following }}</button>
           </form>
         {% endif %}  
