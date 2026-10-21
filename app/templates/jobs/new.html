@@ -5,6 +5,7 @@
 {% block content%}
 <h1>{{ heading|default("Add job") }}</h1>
 <form method="post">
+    {{ csrf_field() }}
     <label for="customer_name">Customer name</label>
     <input name="customer_name" id="customer_name" value="{{ form['customer_name']}}" required autofocus>
 
