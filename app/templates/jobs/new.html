@@ -13,10 +13,14 @@
     <input name="phone" id="phone" value="{{ form['phone']}}" required>
 
     <label for="make">Make</label>
-    <input name="make" id="make" value="{{ form['make']}}" required>
+    <input name="make" id="make" list="make-list" value="{{ form['make']}}" required autocomplete="off">
+    <datalist id="make-list">
+        {% for make in car_models %}<option value="{{ make }}">{% endfor %}
+    </datalist>
 
     <label for="model">Model</label>
-    <input name="model" id="model" value="{{ form['model']}}" required>
+    <input name="model" id="model" list="model-list" value="{{ form['model']}}" required autocomplete="off">
+    <datalist id="model-list"></datalist>
 
     <label for="year">Year</label>
     <input type="number" name="year" id="year" value="{{ form['year']}}" required>
@@ -48,4 +52,29 @@
 
     <button type="submit">{{ button|default("Save job") }}</button>
 </form>
+
+<script>
+    const carModels = {{ car_models|tojson }};
+    const makeInput = document.getElementById("make");
+    const modelList = document.getElementById("model-list")
+
+    const plain = (text) =>
+        text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
+
+    function fillModels() {
+        modelList.innerHTML = "";
+        for (const make in carModels) {
+            if (plain(make) === plain(makeInput.value)) {
+                for (const model of carModels[make]) {
+                    const option = document.createElement("option");
+                    option.value = model;
+                    modelList.appendChild(option);
+                }
+            }
+        }
+    }
+
+    makeInput.addEventListener("input", fillModels);
+    fillModels();
+</script>
 {% endblock %}

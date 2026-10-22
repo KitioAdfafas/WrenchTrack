@@ -1,5 +1,7 @@
 import difflib
+import json
 from datetime import date
+from pathlib import Path
 
 from flask import (
     Blueprint, 
@@ -26,6 +28,21 @@ STATUSES = [
     "Ready",
     "Picked up"
 ]
+
+def load_car_models():
+    """Read app/data/car-list.json into {make: [models]}. Empty if the file is missing."""
+    path = Path(__file__).parent / "data" / "car-list.json"
+    try:
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+    except (OSError, ValueError):
+        return {}
+    return {
+        entry["brand"]: sorted(set(entry["models"]), key=str.casefold)
+        for entry in data
+    }        
+
+CAR_MODELS = load_car_models()
 
 REQUIRED_FIELDS = [
     "customer_name",
@@ -105,7 +122,7 @@ def read_job_form(form):
 ALIAS_GROUPS = [
     {"vw", "volkswagen"},
     {"merc", "mercedes", "mercedes-benz", "benz"},
-    {"skoda", "skodaa"}
+    {"skoda", "škoda"}
 ]
 
 TERM_TO_GROUP = {}
@@ -228,7 +245,7 @@ def new():
             "date_received": date.today().isoformat(),
         }
 
-    return render_template("jobs/new.html", form=form, fuel_types=FUEL_TYPES)
+    return render_template("jobs/new.html", form=form, fuel_types=FUEL_TYPES, car_models=CAR_MODELS)
 
 @bp.route("/<int:job_id>")
 def detail(job_id):
@@ -304,6 +321,7 @@ def edit(job_id):
         "jobs/new.html",
         form=form,
         fuel_types=FUEL_TYPES,
+        car_models=CAR_MODELS,
         heading="Edit job",
         button="Save changes",
     )
