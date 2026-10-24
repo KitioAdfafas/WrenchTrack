@@ -1,11 +1,13 @@
 import difflib
 import json
-from datetime import date
+from datetime import date, datetime, timezone
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 from flask import (
     Blueprint, 
     abort,
+    current_app,
     flash, 
     g,
     redirect,
@@ -63,6 +65,18 @@ def next_status(status):
     if position == len(STATUSES) - 1:
         return None
     return STATUSES[position + 1]
+
+@bp.app_template_filter("localtime")
+def localtime(value):
+    """Turn a UTC timestamp from SQLite into shop time, like 2026-10-24 15:00."""
+    if not value:
+        return ""
+    try:
+        utc = datetime.strptime(value, "%Y-%m-%d %h:%M:%S").replace(tzinfo=timezone.utc)
+    except ValueError:
+        return value
+    zone = zoneInfo(current_app.config["SHOP_TIMEZONE"])
+    return utc.astimezone(zone).strftime("%Y-%m-%d %H:%M")    
 
 def get_job_or_404(job_id):
     job = get_db().execute("SELECT * FROM jobs WHERE id = ?",
@@ -207,6 +221,7 @@ def index():
 
     sql = (
         "SELECT id, plate, make, model, customer_name, status, date_received, "
+        "status_changed_at, "
         "MAX(0, CAST(julianday(date('now')) - julianday(date_received) AS INTEGER)) "
         "AS days_in_shop "
         "FROM jobs"
@@ -256,7 +271,7 @@ def new():
 
         if error is None:
             db = get_db()
-            db.execute(
+            cursor = db.execute(
                 "INSERT INTO jobs (customer_name, phone, make, model, year, plate, "
                 "vin, mileage, engine, fuel_type, problem, date_received, created_by) "
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -275,6 +290,11 @@ def new():
                     values["date_received"],
                     g.user["id"],
                 ),
+            )
+            db.execute(
+                "INSERT INTO status_history (job_id, from_status, to_status, changed_by) "
+                "VALUES (?, NULL, ?, ?)",
+                (cursor.lastrowid, STATUSES[0], g.user["id"]),
             )
             db.commit()
             flash("Job saved.", "ok")
@@ -311,6 +331,13 @@ def detail(job_id):
 
     parts_total, total = calculate_totals(job, parts)
 
+    history = get_db().execute(
+        "SELECT h.from_status, h.to_status, h.changed_at, u.username "
+        "FROM status_history h LEFT JOIN users u ON u.id = h.changed_by "
+        "WHERE h.job_id = ? ORDER BY h.id DESC",
+        (job_id,),
+    ).fetchall()
+
     related_count = len(find_related_jobs(job["plate"], job["vin"], exclude_id=job_id))
 
     return render_template(
@@ -319,6 +346,7 @@ def detail(job_id):
         notes=notes,
         fault_codes=fault_codes,
         parts=parts,
+        history=history,
         parts_total=parts_total,
         total=total,
         next_label=next_status(job["status"]),
@@ -385,7 +413,12 @@ def advance(job_id):
             "UPDATE jobs SET status = ?, status_changed_at = datetime('now') "
             "WHERE id = ?",
             (following, job_id),
-        )    
+        ) 
+        db.execute(
+            "INSERT INTO status_history (job_id, from_status, to_status, changed_by) "
+            "VALUES (?, ?, ?, ?)",
+            (job_id, job["status"], following, g.user["id"]),
+        )   
         db.commit()
 
     if request.form.get("back") == "detail":

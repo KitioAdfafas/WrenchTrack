@@ -1,3 +1,4 @@
+DROP TABLE IF EXISTS status_history;
 DROP TABLE IF EXISTS fault_codes;
 DROP TABLE IF EXISTS parts;
 DROP TABLE IF EXISTS notes;

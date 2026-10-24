@@ -8,6 +8,7 @@
 
     <p>
         <span class="status status-{{ job['status']|lower|replace(' ','-') }}">{{ job["status"]}}</span>
+        <small>since {{ job["status_changed_at"]|localtime}}</small>
         {% if next_label  %}
             <form class="inline-form" method="post" action="{{ url_for('jobs.advance', job_id=job['id']) }}">
                 {{ csrf_field() }}
@@ -134,6 +135,22 @@
         <dt>Total</dt>
         <dd><strong>{{ "%.2f"|format(total) }}</strong></dd>
     </dl>
+
+    <h2>Status history</h2>
+    <table>
+        <thead>
+            <tr><th>When</th><th>Change</th><th>By</th></tr>
+        </thead>
+        <tbody>
+            {% for h in history %}
+            <tr>
+                <td>{{ h["changed_at"]|localtime }}</td>
+                <td>{% if h["from_status"] %}{{ h["from_status"] }} to {{ h["to_status"] }}{% else %}Set to {{ h["to_status"] }}{% endif %}</td>
+                <td>{{ h["username"] or ""}}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 
     <h2>Notes</h2>
     <form method="post" action="{{ url_for('jobs.add_note', job_id=job['id'])}}">
