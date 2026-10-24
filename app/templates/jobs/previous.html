@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Repair history{% endblock %}
+
+{% block content %}
+<p><a href="{{ url_for('jobs.detail', job_id=job['id']) }}">Back to this job</a></p>
+<h1>Repair history: {{ job["plate"] }}, {{ job["make"] }} {{ job["model"] }}</h1>
+
+{% if related %}
+<table>
+    <thead>
+        <tr><th>Received</th><th>Plate</th><th>Car</th><th>Customer</th><th>Status</th><th>Problem</th><th>Match</th></tr>
+    </thead>
+    <tbody>
+        {% for r in related %}
+        <tr>
+            <td><a href="{{ url_for('jobs.detail', job_id=r['id'] )}}">{{ r["date_received"] }}</a></td>
+            <td>{{ r["plate"] }}</td>
+            <td>{{ r["make"] }} {{ r["model"] }}</td>
+            <td>{{ r["customer_name"] }}</td>
+            <td><span class="status status-{{ r['status']|lower|replace(' ','-')}}">{{ r["status"]}}</span></td>
+            <td>{{ r["problem"]|truncate(60) }}</td>
+            <td>{{ r["reason"] }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>No other jobs found for this car.</p>
+{% endif %}
+{% endblock %}

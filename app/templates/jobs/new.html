@@ -51,6 +51,29 @@
     <textarea name="problem" id="problem" rows="4" required>{{ form['problem'] }}</textarea>
 
     <button type="submit">{{ button|default("Save job") }}</button>
+
+    {% if related %}
+    <dialog id="dup-dialog">
+        <h2>This car has been in the shop before</h2>
+        <p>Earlier jobs found: {{ related|length }}. Click one to open it in a new tab.</p>
+        <ul>
+            {% for r in related %}
+            <li>
+                <a href="{{ url_for('jobs.detail', job_id=r['id']) }}" target="_blank">{{ r["date_received"] }}, {{ r["plate"] }}, {{ r["make"] }}{{ r["model"] }}</a>
+                ({{ r["reason"] }})
+            </li>
+            {% endfor %}
+        </ul>
+        <p>Saving creates a new, separate job. The old jobs are not changed.</p>
+        <button type="submit" name="confirm_duplicate" value="1">Save as new job</button>
+        <button type="button" id="dup-close">Go back and edit</button>
+    </dialog>
+    <script>
+        const dupDialog = document.getElementById("dup-dialog");
+        dupDialog.showModal();
+        document.getElementById("dup-close").addEventListener("click", () => dupDialog.close());
+    </script>
+    {% endif %}
 </form>
 
 <script>

@@ -168,6 +168,38 @@ def job_matches(job, words):
         return False
     return True
 
+def find_related_jobs(plate, vin, exclude_id=None):
+    """Other jobs of the same car: same plate, or same VIN (only if both are filled in)."""
+    plate_key = squash(plate)
+    vin_key = squash(vin or "")
+    rows = get_db().execute(
+        "SELECT id, plate, vin, customer_name, make, model, status, date_received, problem "
+        "FROM jobs WHERE id != ? ORDER BY date_received DESC, id DESC",
+        (exclude_id or 0,),
+    ).fetchall()
+
+    found = []
+    for row in rows:
+        row_vin = squash(row["vin"] or "")
+        same_plate = bool(plate_key) and squash(row["plate"]) == plate_key
+        same_vin = bool(vin_key) and row_vin == vin_key
+        if not (same_plate or same_vin):
+            continue
+
+        if same_plate and same_vin:
+            reason = "Same plate and VIN"
+        elif same_plate and vin_key and row_vin:
+            reason = "Same plate, diffrent VIN"
+        elif same_plate:
+            reason = "Same plate"
+        else:
+            reason = "Same VIN, diffrent plate"
+
+        job = dict(row)
+        job["reason"] = reason
+        found.append(job)
+    return found                    
+
 @bp.route("/")
 def index():
     q = request.args.get("q", "").strip()
@@ -210,6 +242,17 @@ def index():
 def new():
     if request.method == "POST":
         values, error = read_job_form(request.form)
+
+        if error is None and not request.form.get("confirm_duplicate"):
+            related = find_related_jobs(values["plate"], values["vin"])
+            if related:
+                return render_template(
+                    "jobs/new.html",
+                    form=values,
+                    fuel_types=FUEL_TYPES,
+                    car_models=CAR_MODELS,
+                    related=related,
+                )
 
         if error is None:
             db = get_db()
@@ -268,6 +311,8 @@ def detail(job_id):
 
     parts_total, total = calculate_totals(job, parts)
 
+    related_count = len(find_related_jobs(job["plate"], job["vin"], exclude_id=job_id))
+
     return render_template(
         "jobs/detail.html",
         job=job,
@@ -277,6 +322,7 @@ def detail(job_id):
         parts_total=parts_total,
         total=total,
         next_label=next_status(job["status"]),
+        related_count=related_count
     )
 
 @bp.route("/<int:job_id>/edit", methods=("GET", "POST"))
@@ -513,3 +559,10 @@ def print_ticket(job_id):
         parts_total=parts_total,
         total=total,
     )
+
+@bp.route("/<int:job_id>/previous-repairs")
+def previous_repairs(job_id):
+    job = get_job_or_404(job_id)
+    related = find_related_jobs(job["plate"], job["vin"], exclude_id=job_id)
+    return render_template("jobs/previous.html", job=job, related=related)
+                    
