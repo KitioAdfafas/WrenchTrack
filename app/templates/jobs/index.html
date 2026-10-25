@@ -8,7 +8,8 @@
 
   <label for="status">Status</label>
   <select name="status" id="status">
-    <option value="">All statuses</option>
+    <option value="" {% if not status %}selected{% endif %}>Active jobs</option>
+    <option value="all" {% if status == "all" %}selected{% endif %}>All jobs</option>
     {% for s in statuses %}
     <option value="{{ s }}" {% if status == s %}selected{% endif %}>{{ s }}</option>
     {% endfor %}
@@ -17,6 +18,8 @@
   <button type="submit">Search</button>
   <a href="{{ url_for('jobs.index') }}">Clear</a>
 </form>
+
+{% if not q and not status %}<p><small>Picked up jobs are hidden. Search, or choose "All jobs" to see them.</small></p>{% endif %}
 
 {% if jobs %}
 <table>
@@ -59,5 +62,5 @@
   </tbody>
 </table>
 {% else %}
-<p>{% if q or status %}No jobs match your search.{% else %}No jobs yet.{% endif %}</p>
+<p>{% if q or status %}No jobs match your search.{% else %}No active jobs.{% endif %}</p>
 {% endif %} {% endblock %}

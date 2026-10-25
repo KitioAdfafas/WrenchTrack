@@ -75,7 +75,7 @@ def localtime(value):
         utc = datetime.strptime(value, "%Y-%m-%d %h:%M:%S").replace(tzinfo=timezone.utc)
     except ValueError:
         return value
-    zone = zoneInfo(current_app.config["SHOP_TIMEZONE"])
+    zone = ZoneInfo(current_app.config["SHOP_TIMEZONE"])
     return utc.astimezone(zone).strftime("%Y-%m-%d %H:%M")    
 
 def get_job_or_404(job_id):
@@ -232,6 +232,9 @@ def index():
     if status in STATUSES:
         conditions.append("status = ?")
         params.append(status)
+    elif status == "" and not q:
+        conditions.append("status != ?")
+        params.append(STATUSES[-1])    
 
     if conditions:
         sql += " WHERE " + " AND ".join(conditions)
