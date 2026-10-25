@@ -123,3 +123,10 @@ dd {
     margin: 0.2rem 0 0;
     white-space: pre-wrap;
 }
+
+.stuck {
+    background: #f8d7da;
+    color: #842029;
+    padding: 0.1rem 0.5rem;
+    border-radius: 999px;
+}

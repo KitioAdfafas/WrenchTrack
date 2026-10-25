@@ -42,7 +42,12 @@
       <td>{{ job["make"] }} {{ job["model"] }}</td>
       <td>{{ job["customer_name"] }}</td>
       <td><span class="status status-{{ job['status']|lower|replace(' ', '-') }}">{{ job["status"] }}</span></td>
-      <td>{{ job["status_changed_at"]|localtime }}</td>
+      <td>{{ job["status_changed_at"]|localtime }}
+        {% if job["status"] != "Picked up" %}
+          {% set d = days_in_status(job["status_changed_at"]) %}
+          <br><small class="{% if is_stuck(job) %}stuck{% endif %}">{{ d }} day{{ "" if d == 1 else "s" }} in this status</small>
+         {% endif %} 
+      </td>
       <td>{{ job["date_received"] }}</td>
       <td>{% if job["status"] == "Picked up" %}-{% else %}{{ job["days_in_shop"] }}{% endif %}</td>
       <td>

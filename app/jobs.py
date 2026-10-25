@@ -31,6 +31,14 @@ STATUSES = [
     "Picked up"
 ]
 
+STUCK_AFTER_DAYS = {
+    "Received": 1,
+    "Diagnosing": 3,
+    "Waiting for parts": 5,
+    "Repairing": 4,
+    "Ready": 2,
+}
+
 def load_car_models():
     """Read app/data/car-list.json into {make: [models]}. Empty if the file is missing."""
     path = Path(__file__).parent / "data" / "car-list.json"
@@ -77,6 +85,21 @@ def localtime(value):
         return value
     zone = ZoneInfo(current_app.config["SHOP_TIMEZONE"])
     return utc.astimezone(zone).strftime("%Y-%m-%d %H:%M")    
+
+@bp.app_template_global()
+def days_in_status(changed_at):
+    """Whole days since the last status change (stored in UTC)."""
+    try:
+        changed = datetime.strptime(changed_at, "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
+    except (TypeError, ValueError):
+        return 0
+    return max(0, (datetime.now(timezone.utc) - changed).days)
+
+@bp.app_template_global()
+def is_stuck(job):
+    """True if the job has sat in its current status for too long."""
+    limit = STUCK_AFTER_DAYS.get(job["status"])
+    return limit is not None and days_in_status(job["status_changed_at"]) >= limit    
 
 def get_job_or_404(job_id):
     job = get_db().execute("SELECT * FROM jobs WHERE id = ?",
