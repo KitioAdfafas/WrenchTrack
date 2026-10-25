@@ -1,4 +1,6 @@
+import csv
 import difflib
+import io
 import json
 from datetime import date, datetime, timezone
 from pathlib import Path
@@ -6,6 +8,7 @@ from zoneinfo import ZoneInfo
 
 from flask import (
     Blueprint, 
+    Response,
     abort,
     current_app,
     flash, 
@@ -624,4 +627,92 @@ def previous_repairs(job_id):
     job = get_job_or_404(job_id)
     related = find_related_jobs(job["plate"], job["vin"], exclude_id=job_id)
     return render_template("jobs/previous.html", job=job, related=related)
-                    
+
+DELIMITERS = {"semicolon": ";", "comma": ","}
+
+def csv_safe(value):
+    """Stop Excel from running customer-typed text as a formula"""
+    text = "" if value is None else str(value)
+    if text and text[0] in ("=", "+", "-", "@", "\t", "\r"):
+        return "'" + text
+    return text
+
+@bp.route("/export")
+def export():
+    return render_template("jobs/export.html")
+
+@bp.route("/export.csv")
+def export_csv():
+    date_from = request.args.get("date_from", "").strip()
+    date_to = request.args.get("date_to", "").strip()
+    delimiter = DELIMITERS.get(request.args.get("delimiter", ""), ";")
+
+    try:
+        start = date.fromisoformat(date_from) if date_from else None
+        end = date.fromisoformat(date_to) if date_to else None
+    except ValueError:
+        flash("Dates must look like 2026-10-10.")
+        return redirect(url_for("jobs.export"))
+    if start and end and start > end:
+        flash("The start date must not be after the end date.")
+        return redirect(url_for("jobs.export"))
+
+    conditions = []
+    params = []
+    if start:
+        conditions.append("j.date_received >= ?")
+        params.append(start.isoformat())
+    if end:
+        conditions.append("j.date_received <= ?")
+        params.append(end.isoformat())
+
+    sql = (
+        "SELECT j.*, COALESCE(SUM(p.quantity * p.price), 0) AS parts_total "
+        "FROM jobs j LEFT JOIN parts p ON p.job_id = j.id"
+    )
+    if conditions:
+        sql += " WHERE " + " AND ".join(conditions)
+    sql += " GROUP BY j.id ORDER BY j.date_received, j.id"
+    rows = get_db().execute(sql, params).fetchall()
+
+    def money(value):
+        text = f"{value:.2f}"
+        return text.replace(".", ",") if delimiter == ";" else text
+
+    output = io.StringIO()
+    writer = csv.writer(output, delimiter=delimiter)
+    writer.writerow([
+        "id", "date_received", "plate", "customer", "phone", "make", "model",
+        "year", "vin", "mileage", "engine", "fuel_type", "problem", "status",
+        "last_status_change", "parts_total", "labor_cost", "total",
+    ])  
+    for row in rows:
+        parts_total = round(row["parts_total"], 2)
+        total = round(parts_total + row["labor_cost"], 2)
+        writer.writerow([
+            row["id"],
+            row["date_received"],
+            csv_safe(row["plate"]),
+            csv_safe(row["customer_name"]),
+            csv_safe(row["phone"]),
+            csv_safe(row["make"]),
+            csv_safe(row["model"]),
+            row["year"],
+            csv_safe(row["vin"]),
+            row["mileage"],
+            csv_safe(row["engine"]),
+            row["fuel_type"],
+            csv_safe(row["problem"]),
+            row["status"],
+            localtime(row["status_changed_at"]),
+            money(parts_total),
+            money(row["labor_cost"]),
+            money(total),
+        ])  
+        
+    filename = f"wrenchtrack_jobs_{date.today().isoformat()}.csv"
+    return Response(
+        output.getvalue().encode("utf-8-sig"),
+        mimetype="text/csv",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )

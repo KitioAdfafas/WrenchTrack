@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}Export jobs{% endblock %}
+
+{% block content %}
+<p><a href="{{ url_for('jobs.index') }}">Back to jobs</a></p>
+<h1>Export jobs to CSV</h1>
+
+<form method="get" action="{{ url_for('jobs.export_csv')}}">
+    <label for="date_from">Received from (optional)</label>
+    <input type="date" name="date_from" id="date_from">
+
+    <label for="date_to">Received until(optional)</label>
+    <input type="date" name="date_to" id="date_to">
+
+    <label for="delimiter">Delimiter</label>
+    <select name="delimiter" id="delimiter">
+        <option value="semicolon">Semicolon (for Excel)</option>
+        <option value="comma">Comma (for Google Sheets or other)</option>
+    </select>
+
+    <button type="submit">Download CSV</button>
+</form>
+
+<p><small>Leave both dates empty to export every job. The range uses date received</small></p>
+{% endblock %}
