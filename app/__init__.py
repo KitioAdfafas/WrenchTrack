@@ -20,6 +20,7 @@ def create_app():
     app.config.from_mapping(
         SECRET_KEY=secret_key,
         DATABASE=os.path.join(app.instance_path, "wrenchtrack.sqlite"),
+        SHOP_TIMEZONE=os.environ.get("SHOP_TIMEZONE", "Europe/Skopje"),
         SESSION_COOKIE_SAMESITE="Lax",
         WTF_CSRF_TIME_LIMIT=None,
     )
@@ -37,7 +38,7 @@ def create_app():
 
     @app.route("/")
     def home():
-        return redirect(url_for("jobs.index"))
+        return redirect(url_for("jobs.dashboard"))
 
     @app.route("/health")
     def health():

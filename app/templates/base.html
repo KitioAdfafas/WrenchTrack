@@ -10,6 +10,7 @@
     <nav>
         <a  class="brand" href="{{ url_for('home') }}">WrenchTrack</a>
         {% if g.user %}
+        <a href="{{ url_for('jobs.dashboard') }}">Dashboard</a>
         <a href="{{ url_for('jobs.index') }}">Jobs</a>
         <a href="{{ url_for('jobs.new') }}">New job</a>
             <span>{{ g.user["username"] }}</span>    

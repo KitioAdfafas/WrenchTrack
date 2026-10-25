@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<h1>Dashboard</h1>
+
+<div class="cards">
+    {% for s in statuses %}
+    <a class="card" href="{{ url_for('jobs.index', status=s) }}">
+        <span class="status status-{{ s|lower|replace(' ', '-') }}">{{ s }}</span>
+        <strong>{{ counts[s] }}</strong>
+    </a>
+    {% endfor %}
+</div>
+
+<h2>Stuck jobs</h2>
+{% if stuck %}
+<table>
+    <thead>
+        <tr><th>Plate</th><th>Car</th><th>Status</th><th>Time in status</th></tr>
+    </thead>
+    <tbody>
+        {% for job in stuck %}
+        {% set d = days_in_status(job["status_changed_at"]) %}
+        <tr>
+            <td><a href="{{ url_for('jobs.detail', job_id=job['id']) }}">{{ job["plate"] }}</a></td>
+            <td>{{ job["make"] }} {{ job["model"] }}</td>
+            <td><span class="status status-{{ job['status']|lower|replace(' ', '-') }}">{{ job["status"] }}</span></td>
+            <td><span class="stuck">{{ d }} day{{ "" if d == 1 else "s" }}</span></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>No stuck jobs.</p>
+{% endif %}
+
+<h2>Revenue this month</h2>
+<dl>
+    <dt>Total</dt>
+    <dd><strong>{{ "%.2f"|format(revenue) }}</strong></dd>
+    <dt>Parts</dt>
+    <dd>{{ "%.2f"|format(parts_total) }}</dd>
+    <dt>Labor</dt>
+    <dd>{{ "%.2f"|format(labor_total) }}</dd>
+    <dt>Jobs picked up</dt>
+    <dd>{{ picked_count }}</dd>
+</dl>
+<p><small>Couted by the date the car was picked up.</small></p>
+
+<h2>Oldest open jobs</h2>
+{% if oldest %}
+<table>
+    <thead>
+        <tr><th>Plate</th><th>Car</th><th>Customer</th><th>Status</th><th>Received</th><th>Days</th></tr>
+    </thead>
+    <tbody>
+        {% for job in oldest %}
+        <tr>
+            <td><a href="{{ url_for('jobs.detail', job_id=job['id']) }}">{{ job["plate"] }}</a></td>
+            <td>{{ job["make"] }} {{ job["model"]}}</td>
+            <td>{{ job["customer_name"] }}</td>
+            <td><span class="status status-{{ job['status']|lower|replace(' ', '-') }}">{{ job["status"]}}</span></td>
+            <td>{{ job["date_received"] }}</td>
+            <td>{{ job["days_in_shop"]}}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>No open jobs.</p>
+{% endif %}
+{% endblock %}

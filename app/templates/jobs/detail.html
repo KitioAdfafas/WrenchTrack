@@ -8,7 +8,7 @@
 
     <p>
         <span class="status status-{{ job['status']|lower|replace(' ','-') }}">{{ job["status"]}}</span>
-        <small class="{% if is_stuck(job) %}stuck{% endif %}">since {{ job["status_changed_at"]|localtime}}{% if next_label %}({{ days_in_shop(job["status_changed_at"]) }} days){% endif %}</small>
+        <small class="{% if is_stuck(job) %}stuck{% endif %}">since {{ job["status_changed_at"]|localtime}}{% if next_label %}({{ days_in_status(job["status_changed_at"]) }} days){% endif %}</small>
         {% if next_label  %}
             <form class="inline-form" method="post" action="{{ url_for('jobs.advance', job_id=job['id']) }}">
                 {{ csrf_field() }}

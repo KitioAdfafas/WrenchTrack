@@ -83,7 +83,7 @@ def localtime(value):
     if not value:
         return ""
     try:
-        utc = datetime.strptime(value, "%Y-%m-%d %h:%M:%S").replace(tzinfo=timezone.utc)
+        utc = datetime.strptime(value, "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
     except ValueError:
         return value
     zone = ZoneInfo(current_app.config["SHOP_TIMEZONE"])
@@ -709,10 +709,60 @@ def export_csv():
             money(row["labor_cost"]),
             money(total),
         ])  
-        
+
     filename = f"wrenchtrack_jobs_{date.today().isoformat()}.csv"
     return Response(
         output.getvalue().encode("utf-8-sig"),
         mimetype="text/csv",
         headers={"Content-Disposition": f"attachment; filename={filename}"},
     )
+
+@bp.route("/dashboard")
+def dashboard():
+    db = get_db()
+
+    counts = {s: 0 for s in STATUSES[:-1]}
+    for row in db.execute(
+        "SELECT status, COUNT(*) AS n FROM jobs WHERE status != ? GROUP BY status",
+        (STATUSES[-1],),
+    ):
+        counts[row["status"]] = row["n"]
+
+    open_jobs = db.execute(
+        "SELECT id, plate, make, model, customer_name, status, date_received, "
+        "status_changed_at, "
+        "MAX(0, CAST(julianday(date('now')) - julianday(date_received) AS INTEGER)) "
+        "AS days_in_shop "
+        "FROM jobs WHERE status != ? ORDER BY date_received, id",
+        (STATUSES[-1],),
+    ).fetchall()   
+    oldest = open_jobs[:5]
+    stuck = [j for j in open_jobs if is_stuck(j)]
+    stuck.sort(key=lambda j: days_in_status(j["status_changed_at"]), reverse=True)
+
+    zone = ZoneInfo(current_app.config["SHOP_TIMEZONE"])
+    month_start = datetime.now(zone).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    month_start_utc = month_start.astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+
+    picked = db.execute(
+        "SELECT j.id, j.labor_cost, COALESCE(SUM(p.quantity * p.price), 0) AS parts_total "
+        "FROM jobs j "
+        "JOIN status_history h ON h.job_id = j.id AND h.to_status = ? AND h.changed_at >= ? "
+        "LEFT JOIN parts p ON p.job_id = j.id "
+        "GROUP BY j.id",
+        (STATUSES[-1], month_start_utc)
+    ).fetchall()
+    parts_total = round(sum(r["parts_total"] for r in picked), 2)
+    labor_total = round(sum(r["labor_cost"] for r in picked), 2)
+
+    return render_template(
+        "jobs/dashboard.html",
+        statuses=STATUSES[:-1],
+        counts=counts,
+        stuck=stuck,
+        oldest=oldest,
+        picked_count=len(picked),
+        parts_total=parts_total,
+        labor_total=labor_total,
+        revenue=round(parts_total + labor_total, 2),
+    )             
