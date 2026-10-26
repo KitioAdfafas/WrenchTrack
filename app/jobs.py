@@ -229,11 +229,11 @@ def find_related_jobs(plate, vin, exclude_id=None):
         if same_plate and same_vin:
             reason = "Same plate and VIN"
         elif same_plate and vin_key and row_vin:
-            reason = "Same plate, diffrent VIN"
+            reason = "Same plate, different VIN"
         elif same_plate:
             reason = "Same plate"
         else:
-            reason = "Same VIN, diffrent plate"
+            reason = "Same VIN, different plate"
 
         job = dict(row)
         job["reason"] = reason
@@ -486,7 +486,7 @@ def add_fault_code(job_id):
     elif len(code) > 20:
         flash("A fault code can be at most 20 characters.")
     elif len(description) > 200:
-        flash("The description can be at most 200 chatacters.")
+        flash("The description can be at most 200 characters.")
     else:
         db = get_db()
         exists = db.execute(
@@ -494,7 +494,7 @@ def add_fault_code(job_id):
             (job_id, code),
         ).fetchone()
         if exists:
-            flash("That code is alredy on this job.")
+            flash("That code is already on this job.")
         else:
             db.execute(
                 "INSERT INTO fault_codes (job_id, code, description) VALUES (?, ?, ?)",

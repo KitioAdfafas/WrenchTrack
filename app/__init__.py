@@ -29,7 +29,7 @@ def create_app():
 
     csrf.init_app(app)
     app.jinja_env.globals["csrf_field"] = lambda: Markup(
-        f'<input type ="hidden" name="csrf_token" value="{generate_csrf()}">'
+        f'<input type="hidden" name="csrf_token" value="{generate_csrf()}">'
     )
 
     db.init_app(app)

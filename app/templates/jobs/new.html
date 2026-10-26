@@ -2,7 +2,7 @@
 
 {% block title %}{{ heading|default("Add job") }}{% endblock %}
 
-{% block content%}
+{% block content %}
 <h1>{{ heading|default("Add job") }}</h1>
 <form method="post">
     {{ csrf_field() }}

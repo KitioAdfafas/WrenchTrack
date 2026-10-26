@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}{% endblock %} - WrenchTrack</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css')}}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <nav>
@@ -16,7 +16,7 @@
             <span>{{ g.user["username"] }}</span>    
             <form method="post" action="{{ url_for('auth.logout') }}">
                 {{ csrf_field() }}
-                <button type="submit">Log Out</button>
+                <button type="submit">Log out</button>
             </form>
         {% endif %}    
     </nav>
@@ -24,7 +24,7 @@
         {% for category, message in get_flashed_messages(with_categories=true) %}
             <div class="flash {{ category }}">{{ message }}</div>
         {% endfor %}
-        {% block content%}{% endblock %}    
+        {% block content %}{% endblock %}
     </main>
 </body>
 </html>
