@@ -3,19 +3,20 @@
 {% block title %}{{ job["plate"] }}{% endblock %}
 
 {% block content %}
-    <p><a href="{{ url_for('jobs.index') }}">Back to jobs</a> | <a href="{{ url_for('jobs.edit', job_id=job['id']) }}">Edit job</a> <a href="{{ url_for('jobs.print_ticket', job_id=job['id']) }}" target="_blank">Print ticket</a>{% if related_count %} | <a href="{{ url_for('jobs.previous_repairs', job_id=job['id']) }}">Repair history ({{ related_count }})</a>{% endif %}</p>
+    <p><a href="{{ url_for('jobs.index') }}">Back to jobs</a> | <a href="{{ url_for('jobs.edit', job_id=job['id']) }}">Edit job</a> | <a href="{{ url_for('jobs.print_ticket', job_id=job['id']) }}" target="_blank">Print ticket</a>{% if related_count %} | <a href="{{ url_for('jobs.previous_repairs', job_id=job['id']) }}">Repair history ({{ related_count }})</a>{% endif %}</p>
     <h1>{{ job["plate"] }}, {{ job["make"] }} {{ job["model"] }}</h1>
 
     <p>
         <span class="status status-{{ job['status']|lower|replace(' ','-') }}">{{ job["status"]}}</span>
-        <small class="{% if is_stuck(job) %}stuck{% endif %}">since {{ job["status_changed_at"]|localtime }} {% if next_label %}({{ days_in_status(job["status_changed_at"]) }} days){% endif %}</small>
-        {% if next_label  %}
+        {% set d = days_in_status(job["status_changed_at"]) %}
+        <small class="{% if is_stuck(job) %}stuck{% endif %}">since {{ job["status_changed_at"]|localtime }} {% if next_label %}({{ d }} day{{ "" if d == 1 else "s" }}){% endif %}</small>
+        {% if next_label %}
             <form class="inline-form" method="post" action="{{ url_for('jobs.advance', job_id=job['id']) }}">
                 {{ csrf_field() }}
                 <input type="hidden" name="back" value="detail">
                 <button type="submit">Move to {{ next_label }}</button>
             </form>
-        {% endif %}    
+        {% endif %}
     </p>
 
     <dl>
@@ -26,7 +27,7 @@
         <dt>Car</dt>
         <dd>{{ job["make"] }} {{ job["model"] }}, {{ job["year"]}}</dd>
         <dt>Engine</dt>
-        <dd>{{ job["engine"] or "not given" }} {{ job["fuel_type"] }}</dd>
+        <dd>{% if job["engine"] %}{{ job["engine"] }}, {% endif %}{{ job["fuel_type"] }}</dd>
         <dt>VIN</dt>
         <dd>{{ job["vin"] or "not given" }}</dd>
         <dt>Mileage</dt>
@@ -64,15 +65,15 @@
                           action="{{ url_for('jobs.delete_fault_code', job_id=job['id'], code_id=fc['id']) }}"
                           onsubmit="return confirm('Remove this fault code?')">
                           {{ csrf_field() }}
-                        <button type="submit">Remove</button>  
-                        </form>         
+                        <button type="submit">Remove</button>
+                        </form>
                 </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
-    {%  else %}
-    <p>No fault codes yet</p>
+    {% else %}
+    <p>No fault codes yet.</p>
     {% endif %}
 
     <h2>Parts</h2>
@@ -96,7 +97,7 @@
             <tr><th>Part</th><th>Qty</th><th>Price each</th><th>Line total</th><th></th></tr>
         </thead>
         <tbody>
-            {% for part in parts  %}
+            {% for part in parts %}
             <tr>
                 <td>{{ part["name"] }}</td>
                 <td>{{ part["quantity"] }}</td>
@@ -107,12 +108,12 @@
                     action="{{ url_for('jobs.delete_part', job_id=job['id'], part_id=part['id']) }}"
                     onsubmit="return confirm('Remove this part?')">
                     {{ csrf_field() }}
-                   <button type="submit">Remove</button> 
+                   <button type="submit">Remove</button>
                 </form>
                 </td>
             </tr>
             {% endfor %}
-        </tbody> 
+        </tbody>
     </table>
     {% else %}
     <p>No parts yet.</p>
@@ -124,7 +125,7 @@
         <label for="labor_cost">Labor cost</label>
         <input type="number" name="labor_cost" id="labor_cost" step="0.01" min="0"
                 value="{{ '%.2f'|format(job['labor_cost']) }}" required>
-        <button type="submit">Save labor</button>        
+        <button type="submit">Save labor</button>
     </form>
 
     <dl>
@@ -145,7 +146,7 @@
             {% for h in history %}
             <tr>
                 <td>{{ h["changed_at"]|localtime }}</td>
-                <td>{% if h["from_status"] %}{{ h["from_status"] }} to {{ h["to_status"] }}{% else %}Set to {{ h["to_status"] }}{% endif %}</td>
+                <td>{% if h["from_status"] %}{{ h["from_status"] }} to {{ h["to_status"] }}{% else %}{{ h["to_status"] }}{% endif %}</td>
                 <td>{{ h["username"] or ""}}</td>
             </tr>
             {% endfor %}
@@ -156,16 +157,16 @@
     <form method="post" action="{{ url_for('jobs.add_note', job_id=job['id'])}}">
         {{ csrf_field() }}
         <label for="body">Add a note</label>
-        <textarea name="body" id="body" rows="3" required></textarea>   
-        <button type="submit">Add note</button>     
+        <textarea name="body" id="body" rows="3" required></textarea>
+        <button type="submit">Add note</button>
     </form>
-    
+
     {% for note in notes %}
         <div class="note">
             <small>{{ note["created_at"] }} UTC</small>
             <p>{{ note["body"] }}</p>
         </div>
     {% else %}
-        <p>No notes yet.</p> 
-    {% endfor %}       
-{% endblock %}    
+        <p>No notes yet.</p>
+    {% endfor %}
+{% endblock %}

@@ -14,7 +14,7 @@
     <tbody>
         {% for r in related %}
         <tr>
-            <td><a href="{{ url_for('jobs.detail', job_id=r['id'] )}}">{{ r["date_received"] }}</a></td>
+            <td><a href="{{ url_for('jobs.detail', job_id=r['id']) }}">{{ r["date_received"] }}</a></td>
             <td>{{ r["plate"] }}</td>
             <td>{{ r["make"] }} {{ r["model"] }}</td>
             <td>{{ r["customer_name"] }}</td>

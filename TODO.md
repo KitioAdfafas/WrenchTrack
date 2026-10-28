@@ -24,9 +24,9 @@
 
 - Wider search: the job list search also finds jobs by phone number, VIN and fault code.
 - Currency setting: CURRENCY in .env (MKD by default) is shown after every amount on the detail, print and dashboard pages.
+- Typo and small error fixes across the README, templates and code. This fixed the broken print page, renamed "previous repairs" to "Repair history" in the README and the URL, and removed trailing spaces.
 
 ## Housekeeping
 
-- Fix README typos ("bu", "previos", "soured") and rename "previous repairs" to "Repair history".
 - Remove the unused home.html or find a use for it.
 - Take new README screenshots.

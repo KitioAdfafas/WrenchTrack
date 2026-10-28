@@ -31,7 +31,7 @@
     <label for="vin">VIN (optional)</label>
     <input name="vin" id="vin" value="{{ form['vin']}}">
 
-    <label for="mileage">Mileage(km)</label>
+    <label for="mileage">Mileage (km)</label>
     <input type="number" name="mileage" id="mileage" value="{{ form['mileage']}}" required>
 
     <label for="engine">Engine</label>
@@ -59,7 +59,7 @@
         <ul>
             {% for r in related %}
             <li>
-                <a href="{{ url_for('jobs.detail', job_id=r['id']) }}" target="_blank">{{ r["date_received"] }}, {{ r["plate"] }}, {{ r["make"] }}{{ r["model"] }}</a>
+                <a href="{{ url_for('jobs.detail', job_id=r['id']) }}" target="_blank">{{ r["date_received"] }}, {{ r["plate"] }}, {{ r["make"] }} {{ r["model"] }}</a>
                 ({{ r["reason"] }})
             </li>
             {% endfor %}
@@ -79,7 +79,7 @@
 <script>
     const carModels = {{ car_models|tojson }};
     const makeInput = document.getElementById("make");
-    const modelList = document.getElementById("model-list")
+    const modelList = document.getElementById("model-list");
 
     const plain = (text) =>
         text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();

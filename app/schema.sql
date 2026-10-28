@@ -30,10 +30,10 @@ CREATE TABLE jobs (
         CHECK (status IN ('Received', 'Diagnosing', 'Waiting for parts', 'Repairing', 'Ready', 'Picked up')),
     date_received TEXT NOT NULL,
     labor_cost REAL NOT NULL DEFAULT 0,
-    status_changed_at TEXT NOT NULL DEFAULT (datetime('now')),    
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),     
-    created_by INTEGER REFERENCES users (id)  
-    );
+    status_changed_at TEXT NOT NULL DEFAULT (datetime('now')),
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    created_by INTEGER REFERENCES users (id)
+);
 
 CREATE TABLE notes (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -51,4 +51,4 @@ CREATE TABLE parts (
 );
 
 CREATE INDEX idx_jobs_plate ON jobs (plate);
-CREATE INDEX idx_jobs_status on jobs (status);
+CREATE INDEX idx_jobs_status ON jobs (status);

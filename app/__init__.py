@@ -14,7 +14,7 @@ def create_app():
     secret_key = os.environ.get("SECRET_KEY")
     if not secret_key:
         raise RuntimeError(
-            "SECRET_KEY is not set. Copy .env.example to .env and set a real value"
+            "SECRET_KEY is not set. Copy .env.example to .env and set a real value."
         )
 
     app.config.from_mapping(

@@ -7,17 +7,17 @@ WrenchTrack is a web app for auto repair shops to manage repair jobs from vehicl
 - Staff login; accounts are created from the command line
 - Create and edit repair jobs with customer and vehicle details
 - Track job status from **Received** to **Picked up**
-- Search bu customer, plate, make, or model, and filter by status
+- Search by customer, plate, make, or model, and filter by status
 - Dashboard for active jobs and jobs that may be waiting too long
 - Add notes, OBD fault codes, parts, and labor costs
-- View previos repairs linked by license plate or VIN
+- Repair history: see earlier jobs linked by license plate or VIN
 - Print job tickets and export jobs to CSV
 - Back up the database and apply non-destructive database migrations
 
 ## Getting started (Windows PowerShell)
 
 ```powershell
-git clone https://github.com/KitioAdfafas/Wrenchtrack.git
+git clone https://github.com/KitioAdfafas/WrenchTrack.git
 cd WrenchTrack
 python -m venv .venv
 .venv\Scripts\Activate.ps1
@@ -45,7 +45,6 @@ Set `SHOP_TIMEZONE` in `.env` to choose the shop's time zone (defaults to `Europ
 
 ## Data attribution
 
-The car make and model list is soured from
-
+The car make and model list is sourced from
 [car-list](https://github.com/matthlavacka/car-list)
-by [matthlavacka](https://github.com/matthlavacka)
+by [matthlavacka](https://github.com/matthlavacka).

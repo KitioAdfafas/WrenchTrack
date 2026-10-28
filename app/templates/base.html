@@ -8,17 +8,17 @@
 </head>
 <body>
     <nav>
-        <a  class="brand" href="{{ url_for('home') }}">WrenchTrack</a>
+        <a class="brand" href="{{ url_for('home') }}">WrenchTrack</a>
         {% if g.user %}
-        <a href="{{ url_for('jobs.dashboard') }}">Dashboard</a>
-        <a href="{{ url_for('jobs.index') }}">Jobs</a>
-        <a href="{{ url_for('jobs.new') }}">New job</a>
-            <span>{{ g.user["username"] }}</span>    
+            <a href="{{ url_for('jobs.dashboard') }}">Dashboard</a>
+            <a href="{{ url_for('jobs.index') }}">Jobs</a>
+            <a href="{{ url_for('jobs.new') }}">New job</a>
+            <span>{{ g.user["username"] }}</span>
             <form method="post" action="{{ url_for('auth.logout') }}">
                 {{ csrf_field() }}
                 <button type="submit">Log out</button>
             </form>
-        {% endif %}    
+        {% endif %}
     </nav>
     <main>
         {% for category, message in get_flashed_messages(with_categories=true) %}

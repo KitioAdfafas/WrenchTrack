@@ -7,11 +7,11 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from flask import (
-    Blueprint, 
+    Blueprint,
     Response,
     abort,
     current_app,
-    flash, 
+    flash,
     g,
     redirect,
     render_template,
@@ -31,7 +31,7 @@ STATUSES = [
     "Waiting for parts",
     "Repairing",
     "Ready",
-    "Picked up"
+    "Picked up",
 ]
 
 STUCK_AFTER_DAYS = {
@@ -53,7 +53,7 @@ def load_car_models():
     return {
         entry["brand"]: sorted(set(entry["models"]), key=str.casefold)
         for entry in data
-    }        
+    }
 
 CAR_MODELS = load_car_models()
 
@@ -87,7 +87,7 @@ def localtime(value):
     except ValueError:
         return value
     zone = ZoneInfo(current_app.config["SHOP_TIMEZONE"])
-    return utc.astimezone(zone).strftime("%Y-%m-%d %H:%M")    
+    return utc.astimezone(zone).strftime("%Y-%m-%d %H:%M")
 
 @bp.app_template_filter("money")
 def money(value):
@@ -111,11 +111,12 @@ def days_in_status(changed_at):
 def is_stuck(job):
     """True if the job has sat in its current status for too long."""
     limit = STUCK_AFTER_DAYS.get(job["status"])
-    return limit is not None and days_in_status(job["status_changed_at"]) >= limit    
+    return limit is not None and days_in_status(job["status_changed_at"]) >= limit
 
 def get_job_or_404(job_id):
-    job = get_db().execute("SELECT * FROM jobs WHERE id = ?",
-    (job_id,)).fetchone()
+    job = get_db().execute(
+        "SELECT * FROM jobs WHERE id = ?", (job_id,)
+    ).fetchone()
     if job is None:
         abort(404)
     return job
@@ -125,7 +126,7 @@ def calculate_totals(job, parts):
     parts_total = round(sum(p["quantity"] * p["price"] for p in parts), 2)
     total = round(parts_total + job["labor_cost"], 2)
     return parts_total, total
-    
+
 def read_job_form(form):
     """Clean the submitted form. Returns (values, error). error is None if valid."""
     values = {
@@ -171,7 +172,7 @@ def read_job_form(form):
 ALIAS_GROUPS = [
     {"vw", "volkswagen"},
     {"merc", "mercedes", "mercedes-benz", "benz"},
-    {"skoda", "škoda"}
+    {"skoda", "škoda"},
 ]
 
 TERM_TO_GROUP = {}
@@ -195,11 +196,11 @@ def word_variants(word):
     return {word}
 
 def squash(text):
-    """Lowercase and keep only letters and digits, so SR-1234-AG becomes sr1234ag"""
+    """Lowercase and keep only letters and digits, so SR-1234-AG becomes sr1234ag."""
     return "".join(ch for ch in text.casefold() if ch.isalnum())
 
 def job_matches(job, words):
-    """True if every search word is found in the job (alias, substring or typo)."""    
+    """True if every search word is found in the job (alias, substring or typo)."""
     haystack = " ".join(
         [job["plate"], job["customer_name"], job["make"], job["model"],
          job["phone"], job["vin"] or "", job["codes"] or ""]
@@ -252,7 +253,7 @@ def find_related_jobs(plate, vin, exclude_id=None):
         job = dict(row)
         job["reason"] = reason
         found.append(job)
-    return found                    
+    return found
 
 @bp.route("/")
 def index():
@@ -276,7 +277,7 @@ def index():
         params.append(status)
     elif status == "" and not q:
         conditions.append("status != ?")
-        params.append(STATUSES[-1])    
+        params.append(STATUSES[-1])
 
     if conditions:
         sql += " WHERE " + " AND ".join(conditions)
@@ -296,7 +297,7 @@ def index():
         q=q,
         status=status,
         statuses=STATUSES,
-    )            
+    )
 
 @bp.route("/new", methods=("GET", "POST"))
 def new():
@@ -395,7 +396,7 @@ def detail(job_id):
         parts_total=parts_total,
         total=total,
         next_label=next_status(job["status"]),
-        related_count=related_count
+        related_count=related_count,
     )
 
 @bp.route("/<int:job_id>/edit", methods=("GET", "POST"))
@@ -407,7 +408,7 @@ def edit(job_id):
         if error is None:
             db = get_db()
             db.execute(
-                "UPDATE jobs SET customer_name = ?, phone = ?, make = ?, model = ?,"
+                "UPDATE jobs SET customer_name = ?, phone = ?, make = ?, model = ?, "
                 "year = ?, plate = ?, vin = ?, mileage = ?, engine = ?, "
                 "fuel_type = ?, problem = ?, date_received = ? "
                 "WHERE id = ?",
@@ -434,7 +435,7 @@ def edit(job_id):
         flash(error)
         form = values
     else:
-        form = {key: ("" if value is None else value) for key, value in dict(job).items()}    
+        form = {key: ("" if value is None else value) for key, value in dict(job).items()}
 
     return render_template(
         "jobs/new.html",
@@ -458,12 +459,12 @@ def advance(job_id):
             "UPDATE jobs SET status = ?, status_changed_at = datetime('now') "
             "WHERE id = ?",
             (following, job_id),
-        ) 
+        )
         db.execute(
             "INSERT INTO status_history (job_id, from_status, to_status, changed_by) "
             "VALUES (?, ?, ?, ?)",
             (job_id, job["status"], following, g.user["id"]),
-        )   
+        )
         db.commit()
 
     if request.form.get("back") == "detail":
@@ -474,7 +475,7 @@ def advance(job_id):
             q=request.form.get("q") or None,
             status=request.form.get("status") or None,
         )
-    )   
+    )
 
 @bp.route("/<int:job_id>/notes", methods=("POST",))
 def add_note(job_id):
@@ -482,14 +483,14 @@ def add_note(job_id):
     body = request.form.get("body", "").strip()
 
     if not body:
-        flash("A note cannot be empty.") 
+        flash("A note cannot be empty.")
     else:
         db = get_db()
-        db.execute("INSERT INTO notes (job_id, body) VALUES (?, ?)", (job_id, body)) 
+        db.execute("INSERT INTO notes (job_id, body) VALUES (?, ?)", (job_id, body))
         db.commit()
         flash("Note added.", "ok")
 
-    return redirect(url_for("jobs.detail", job_id=job_id))                                     
+    return redirect(url_for("jobs.detail", job_id=job_id))
 
 @bp.route("/<int:job_id>/fault-codes", methods=("POST",))
 def add_fault_code(job_id):
@@ -515,7 +516,7 @@ def add_fault_code(job_id):
             db.execute(
                 "INSERT INTO fault_codes (job_id, code, description) VALUES (?, ?, ?)",
                 (job_id, code, description or None),
-            )                
+            )
             db.commit()
             flash("Fault code added.", "ok")
 
@@ -536,7 +537,7 @@ def delete_fault_code(job_id, code_id):
     else:
         flash("That fault code was not found.")
 
-    return redirect(url_for("jobs.detail", job_id=job_id))    
+    return redirect(url_for("jobs.detail", job_id=job_id))
 
 @bp.route("/<int:job_id>/parts", methods=("POST",))
 def add_part(job_id):
@@ -568,12 +569,12 @@ def add_part(job_id):
         db = get_db()
         db.execute(
             "INSERT INTO parts (job_id, name, quantity, price) VALUES (?, ?, ?, ?)",
-            (job_id, name, quantity, price)
+            (job_id, name, quantity, price),
         )
         db.commit()
         flash("Part added.", "ok")
 
-    return redirect(url_for("jobs.detail", job_id=job_id))                           
+    return redirect(url_for("jobs.detail", job_id=job_id))
 
 @bp.route("/<int:job_id>/parts/<int:part_id>/delete", methods=("POST",))
 def delete_part(job_id, part_id):
@@ -598,12 +599,12 @@ def set_labor(job_id):
     labor_text = request.form.get("labor_cost", "").strip()
 
     try:
-        labor_cost = float(labor_text.replace(",","."))
+        labor_cost = float(labor_text.replace(",", "."))
     except ValueError:
         labor_cost = None
 
     if labor_cost is None or not 0 <= labor_cost <= 100000:
-        flash("Labor cost must be a number between 0 and 100000.")      
+        flash("Labor cost must be a number between 0 and 100000.")
     else:
         db = get_db()
         db.execute(
@@ -615,7 +616,7 @@ def set_labor(job_id):
 
     return redirect(url_for("jobs.detail", job_id=job_id))
 
-@bp.route("/<int:job_id>/print") 
+@bp.route("/<int:job_id>/print")
 def print_ticket(job_id):
     job = get_job_or_404(job_id)
     db = get_db()
@@ -638,7 +639,7 @@ def print_ticket(job_id):
         total=total,
     )
 
-@bp.route("/<int:job_id>/previous-repairs")
+@bp.route("/<int:job_id>/repair-history")
 def previous_repairs(job_id):
     job = get_job_or_404(job_id)
     related = find_related_jobs(job["plate"], job["vin"], exclude_id=job_id)
@@ -647,7 +648,7 @@ def previous_repairs(job_id):
 DELIMITERS = {"semicolon": ";", "comma": ","}
 
 def csv_safe(value):
-    """Stop Excel from running customer-typed text as a formula"""
+    """Stop Excel from running customer-typed text as a formula."""
     text = "" if value is None else str(value)
     if text and text[0] in ("=", "+", "-", "@", "\t", "\r"):
         return "'" + text
@@ -701,7 +702,7 @@ def export_csv():
         "id", "date_received", "plate", "customer", "phone", "make", "model",
         "year", "vin", "mileage", "engine", "fuel_type", "problem", "status",
         "last_status_change", "parts_total", "labor_cost", "total",
-    ])  
+    ])
     for row in rows:
         parts_total = round(row["parts_total"], 2)
         total = round(parts_total + row["labor_cost"], 2)
@@ -724,7 +725,7 @@ def export_csv():
             money(parts_total),
             money(row["labor_cost"]),
             money(total),
-        ])  
+        ])
 
     filename = f"wrenchtrack_jobs_{date.today().isoformat()}.csv"
     return Response(
@@ -751,7 +752,7 @@ def dashboard():
         "AS days_in_shop "
         "FROM jobs WHERE status != ? ORDER BY date_received, id",
         (STATUSES[-1],),
-    ).fetchall()   
+    ).fetchall()
     oldest = open_jobs[:5]
     stuck = [j for j in open_jobs if is_stuck(j)]
     stuck.sort(key=lambda j: days_in_status(j["status_changed_at"]), reverse=True)
@@ -766,7 +767,7 @@ def dashboard():
         "JOIN status_history h ON h.job_id = j.id AND h.to_status = ? AND h.changed_at >= ? "
         "LEFT JOIN parts p ON p.job_id = j.id "
         "GROUP BY j.id",
-        (STATUSES[-1], month_start_utc)
+        (STATUSES[-1], month_start_utc),
     ).fetchall()
     parts_total = round(sum(r["parts_total"] for r in picked), 2)
     labor_total = round(sum(r["labor_cost"] for r in picked), 2)
@@ -781,4 +782,4 @@ def dashboard():
         parts_total=parts_total,
         labor_total=labor_total,
         revenue=round(parts_total + labor_total, 2),
-    )             
+    )

@@ -33,7 +33,7 @@
                             {{ fc["code"] }}{% if fc["description"] %}: {{ fc["description"] }}{% endif %}<br>
                         {% else %}
                             none
-                        {% endfor %}        
+                        {% endfor %}
                     </td>
                 </tr>
             </table>
@@ -49,10 +49,10 @@
                         <td>{{ part["name"] }}</td>
                         <td>{{ part["quantity"] }}</td>
                         <td>{{ part["price"]|money }}</td>
-                        <td>{{ part["quantity"] * part["price"])|money }}</td>
+                        <td>{{ (part["quantity"] * part["price"])|money }}</td>
                     </tr>
                     {% endfor %}
-                </tbody>    
+                </tbody>
             </table>
             {% else %}
             <p>No parts used.</p>

@@ -20,7 +20,7 @@ def close_db(e=None):
         db.close()
 
 def migrate_db():
-    """Add any missing tables. Never deletes data."""
+    """Add any missing tables and columns. Never deletes data."""
     db = get_db()
     with current_app.open_resource("migrations.sql") as f:
         db.executescript(f.read().decode("utf8"))
@@ -28,13 +28,13 @@ def migrate_db():
     columns = [row["name"] for row in db.execute("PRAGMA table_info(jobs)")]
     if "labor_cost" not in columns:
         db.execute("ALTER TABLE jobs ADD COLUMN labor_cost REAL NOT NULL DEFAULT 0")
-        db.commit()        
+        db.commit()
 
 def init_db():
     db = get_db()
     with current_app.open_resource("schema.sql") as f:
         db.executescript(f.read().decode("utf8"))
-    migrate_db()    
+    migrate_db()
 
 
 @click.command("init-db")
@@ -46,9 +46,9 @@ def init_db_command():
 
 @click.command("migrate-db")
 def migrate_db_command():
-    """Add missing tables without deleting any data."""
+    """Add missing tables and columns without deleting any data."""
     migrate_db()
-    click.echo("Database is up to date")
+    click.echo("Database is up to date.")
 
 @click.command("backup-db")
 def backup_db_command():
