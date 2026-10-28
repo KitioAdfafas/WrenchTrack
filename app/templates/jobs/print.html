@@ -48,8 +48,8 @@
                     <tr>
                         <td>{{ part["name"] }}</td>
                         <td>{{ part["quantity"] }}</td>
-                        <td>{{ "%.2f"|format(part["price"]) }}</td>
-                        <td>{{ "%.2f"|format(part["quantity"] * part["price"]) }}</td>
+                        <td>{{ part["price"]|money }}</td>
+                        <td>{{ part["quantity"] * part["price"])|money }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>    
@@ -58,8 +58,8 @@
             <p>No parts used.</p>
             {% endif %}
 
-            <p>Parts: {{ "%.2f"|format(parts_total) }}</p>
-            <p>Labor: {{ "%.2f"|format(job["labor_cost"]) }}</p>
-            <h2>Total: {{ "%.2f"|format(total) }}</h2>
+            <p>Parts: {{ parts_total|money }}</p>
+            <p>Labor: {{ job["labor_cost"]|money }}</p>
+            <h2>Total: {{ total|money }}</h2>
         </body>
 </html>

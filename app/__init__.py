@@ -21,6 +21,7 @@ def create_app():
         SECRET_KEY=secret_key,
         DATABASE=os.path.join(app.instance_path, "wrenchtrack.sqlite"),
         SHOP_TIMEZONE=os.environ.get("SHOP_TIMEZONE", "Europe/Skopje"),
+        CURRENCY=os.environ.get("CURRENCY", "MKD"),
         SESSION_COOKIE_SAMESITE="Lax",
         WTF_CSRF_TIME_LIMIT=None,
     )

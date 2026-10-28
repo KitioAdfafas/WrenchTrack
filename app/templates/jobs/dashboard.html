@@ -39,11 +39,11 @@
 <h2>Revenue this month</h2>
 <dl>
     <dt>Total</dt>
-    <dd><strong>{{ "%.2f"|format(revenue) }}</strong></dd>
+    <dd><strong>{{ revenue|money }}</strong></dd>
     <dt>Parts</dt>
-    <dd>{{ "%.2f"|format(parts_total) }}</dd>
+    <dd>{{ parts_total|money }}</dd>
     <dt>Labor</dt>
-    <dd>{{ "%.2f"|format(labor_total) }}</dd>
+    <dd>{{ labor_total|money }}</dd>
     <dt>Jobs picked up</dt>
     <dd>{{ picked_count }}</dd>
 </dl>

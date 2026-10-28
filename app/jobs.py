@@ -89,6 +89,15 @@ def localtime(value):
     zone = ZoneInfo(current_app.config["SHOP_TIMEZONE"])
     return utc.astimezone(zone).strftime("%Y-%m-%d %H:%M")    
 
+@bp.app_template_filter("money")
+def money(value):
+    """Format an amount with two decimals and the shop currency."""
+    text = f"{value or 0:.2f}"
+    currency = current_app.config["CURRENCY"].strip()
+    if not currency:
+        return text
+    return f"{text} {currency}"
+
 @bp.app_template_global()
 def days_in_status(changed_at):
     """Whole days since the last status change (stored in UTC)."""
