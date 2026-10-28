@@ -192,16 +192,21 @@ def squash(text):
 def job_matches(job, words):
     """True if every search word is found in the job (alias, substring or typo)."""    
     haystack = " ".join(
-        [job["plate"], job["customer_name"], job["make"], job["model"]]
+        [job["plate"], job["customer_name"], job["make"], job["model"],
+         job["phone"], job["vin"] or "", job["codes"] or ""]
     ).casefold()
     tokens = haystack.replace("-", " ").split()
-    plate_squashed = squash(job["plate"])
+    squashed_fields = [
+        squash(job["plate"]),
+        squash(job["phone"]),
+        squash(job["vin"] or ""),
+    ]
 
     for word in words:
         if any(variant in haystack for variant in word_variants(word)):
             continue
         squashed = squash(word)
-        if squashed and squashed in plate_squashed:
+        if squashed and any(squashed in field for field in squashed_fields):
             continue
         if can_fuzzy(word) and difflib.get_close_matches(word, tokens, n=1, cutoff=0.8):
             continue
@@ -247,7 +252,9 @@ def index():
 
     sql = (
         "SELECT id, plate, make, model, customer_name, status, date_received, "
-        "status_changed_at, "
+        "status_changed_at, phone, vin, "
+        "(SELECT GROUP_CONCAT(code, ' ') FROM fault_codes "
+        "WHERE fault_codes.job_id = jobs.id) AS codes, "
         "MAX(0, CAST(julianday(date('now')) - julianday(date_received) AS INTEGER)) "
         "AS days_in_shop "
         "FROM jobs"

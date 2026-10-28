@@ -3,7 +3,7 @@
 <p><a href="{{ url_for('jobs.new') }}">Add job</a> | <a href="{{ url_for('jobs.export') }}">Export CSV</a></p>
 
 <form method="get" action="{{ url_for('jobs.index') }}">
-  <label for="q">Search plate, customer or car</label>
+  <label for="q">Search plate, customer, car, phone, VIN or fault code</label>
   <input name="q" id="q" value="{{ q }}">
 
   <label for="status">Status</label>
