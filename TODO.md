@@ -2,7 +2,7 @@
 
 ## In progress
 
-- Nothing right now.
+- Photos on jobs: upload on the new job form and on the job page, a name for each photo, before and after groups, shrinking with Pillow, HEIC support and a backup-photos command. Full plan in docs/photos-plan.md.
 
 ## Next, roughly in order
 
@@ -15,7 +15,8 @@
 - Service reminders based on mileage and the date of the last visit.
 - Cost price and sell price on parts.
 - Fault code lookup.
-- Photos on jobs, for things like damage at check-in.
+- Full activity log: a record of what every user does (logins and logouts, new jobs, edits, status changes, photos, parts, notes), with when it happened and who did it. Needs a log table and a small helper that every route calls.
+- Radio repair: a second job type for car radios (for example Audi MMI 3G, VW RNS 510). Same make and model, no plate or VIN, new fields such as hardware or software problem and the software version before and after. Photos must work for it too. Changes the "Cars only" rule, so it needs its own planning first. Leaning toward a job type column plus a radio details table, which means a careful migration to relax the NOT NULL rules on the jobs table.
 - A QR code status page where customers can check their job. This would be the first public page, so privacy needs thinking through.
 - pytest tests and GitHub Actions.
 - Scheduled backups.
