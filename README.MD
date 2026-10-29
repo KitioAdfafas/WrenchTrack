@@ -7,7 +7,7 @@ WrenchTrack is a web app for auto repair shops to manage repair jobs from vehicl
 - Staff login; accounts are created from the command line
 - Create and edit repair jobs with customer and vehicle details
 - Track job status from **Received** to **Picked up**
-- Search by customer, plate, make, or model, and filter by status
+- Search by customer, plate, make, model, phone number, VIN, or fault code, and filter by status
 - Dashboard for active jobs and jobs that may be waiting too long
 - Add notes, OBD fault codes, parts, and labor costs
 - Repair history: see earlier jobs linked by license plate or VIN
@@ -39,9 +39,13 @@ Open [http://127.0.0.1:5000](http://127.0.0.1:5000) and log in.
 
 **Warning:** `init-db` deletes existing data. For an existing database, use `flask --app app migrate-db` instead. To make a backup, run `flask --app app backup-db`.
 
-## Notes
+## Settings
 
-Set `SHOP_TIMEZONE` in `.env` to choose the shop's time zone (defaults to `Europe/Skopje`). For public deployment, use a production WSGI server and HTTPS; do not expose Flask's development server directly to the internet.
+Set `SHOP_TIMEZONE` in `.env` to choose the shop's time zone (defaults to `Europe/Skopje`), and `CURRENCY` to choose the currency shown after amounts (defaults to `MKD`).
+
+## Planned work
+
+See [TODO.md](TODO.md).
 
 ## Data attribution
 
