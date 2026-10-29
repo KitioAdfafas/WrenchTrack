@@ -22,6 +22,9 @@ def create_app():
         DATABASE=os.path.join(app.instance_path, "wrenchtrack.sqlite"),
         SHOP_TIMEZONE=os.environ.get("SHOP_TIMEZONE", "Europe/Skopje"),
         CURRENCY=os.environ.get("CURRENCY", "MKD"),
+        PHOTO_QUALITY=int(os.environ.get("PHOTO_QUALITY", "75")),
+        PHOTO_MAX_SIDE=int(os.environ.get("PHOTO_MAX_SIDE", "2000")),
+        MAX_CONTENT_LENGTH=50 * 1024 * 1024,
         SESSION_COOKIE_SAMESITE="Lax",
         WTF_CSRF_TIME_LIMIT=None,
     )
