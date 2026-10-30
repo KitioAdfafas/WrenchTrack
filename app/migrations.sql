@@ -27,6 +27,19 @@ CREATE TABLE IF NOT EXISTS status_history (
 
 CREATE INDEX IF NOT EXISTS idx_status_history_job ON status_history (job_id);
 
+CREATE TABLE IF NOT EXISTS photos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    job_id INTEGER NOT NULL REFERENCES jobs (id) ON DELETE CASCADE,
+    filename TEXT NOT NULL UNIQUE,
+    name TEXT,
+    stage TEXT NOT NULL
+        CHECK (stage IN ('before', after)),
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    created_by INTEGER REFERENCES users (id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_photos_job ON photos (job_id);
+
 INSERT INTO status_history (job_id, from_status, to_status, changed_at)
 SELECT id, NULL, status, status_changed_at FROM jobs
 WHERE id NOT IN (SELECT job_id FROM status_history);

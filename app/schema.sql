@@ -1,3 +1,4 @@
+DROP TABLE IF EXISTS photos;
 DROP TABLE IF EXISTS status_history;
 DROP TABLE IF EXISTS fault_codes;
 DROP TABLE IF EXISTS parts;
@@ -50,5 +51,17 @@ CREATE TABLE parts (
     price REAL NOT NULL DEFAULT 0
 );
 
+CREATE TABLE photos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    job_id INTEGER NOT NULL REFERENCES jobs (id) ON DELETE CASCADE,
+    filename TEXT NOT NULL UNIQUE,
+    name TEXT,
+    stage TEXT NOT NULL
+        CHECK (stage IN ('before', 'after')),
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    created_by INTEGER REFERENCES users (id)     
+);
+
 CREATE INDEX idx_jobs_plate ON jobs (plate);
 CREATE INDEX idx_jobs_status ON jobs (status);
+CREATE INDEX idx_photos_job ON photos (job_id);
