@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS photos (
     filename TEXT NOT NULL UNIQUE,
     name TEXT,
     stage TEXT NOT NULL
-        CHECK (stage IN ('before', after)),
+        CHECK (stage IN ('before', 'after')),
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     created_by INTEGER REFERENCES users (id)
 );

@@ -59,7 +59,7 @@ CREATE TABLE photos (
     stage TEXT NOT NULL
         CHECK (stage IN ('before', 'after')),
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    created_by INTEGER REFERENCES users (id)     
+    created_by INTEGER REFERENCES users (id)
 );
 
 CREATE INDEX idx_jobs_plate ON jobs (plate);
