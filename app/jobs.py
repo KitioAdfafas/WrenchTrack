@@ -16,10 +16,12 @@ from flask import (
     redirect,
     render_template,
     request,
+    send_from_directory,
     url_for,
 )
 
 from .db import get_db
+from .photos import photo_folder
 
 bp = Blueprint("jobs", __name__, url_prefix="/jobs")
 
@@ -592,6 +594,16 @@ def delete_part(job_id, part_id):
         flash("That part was not found.")
 
     return redirect(url_for("jobs.detail", job_id=job_id))
+
+@bp.route("/<int:job_id>/photos/<int:photo_id>")
+def photo_file(job_id, photo_id):
+    photo = get_db().execute(
+        "SELECT filename FROM photos WHERE id = ? AND job_id = ?",
+        (photo_id, job_id),
+    ).fetchone()
+    if photo is None:
+        abort(404)
+    return send_from_directory(photo_folder(), photo["filename"])
 
 @bp.route("/<int:job_id>/labor", methods=("POST",))
 def set_labor(job_id):
