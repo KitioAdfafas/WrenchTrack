@@ -395,6 +395,15 @@ def detail(job_id):
         (job_id,),
     ).fetchall()
 
+    photos = get_db().execute(
+        "SELECT p.id, p.name, p.stage, p.created_at, u.username "
+        "FROM photos p LEFT JOIN users u ON u.id = p.created_by "
+        "WHERE p.job_id = ? ORDER BY p.id",
+        (job_id,),
+    ).fetchall()
+    before_photos = [photo for photo in photos if photo["stage"] == "before"]
+    after_photos = [photo for photo in photos if photo["stage"] == "after"]
+
     related_count = len(find_related_jobs(job["plate"], job["vin"], exclude_id=job_id))
 
     return render_template(
@@ -409,6 +418,8 @@ def detail(job_id):
         next_label=next_status(job["status"]),
         related_count=related_count,
         photo_stage=default_photo_stage(job["status"]),
+        before_photos=before_photos,
+        after_photos=after_photos,
     )
 
 @bp.route("/<int:job_id>/edit", methods=("GET", "POST"))

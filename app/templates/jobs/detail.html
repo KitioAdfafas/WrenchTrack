@@ -134,6 +134,28 @@
         <button type="submit">Add photo</button>
     </form>
 
+    {% for title, group in [("Before", before_photos), ("After", after_photos)] %}
+    <h3>{{ title }}</h3>
+    {% if group %}
+    <div class="photos">
+        {% for photo in group %}
+        {% set photo_url = url_for('jobs.photo_file', job_id=job['id'], photo_id=photo['id']) %}
+        <figure class="photo">
+            <a href="{{ photo_url }}" target="_blank">
+                <img src="{{ photo_url }}" alt="{{ photo['name'] or 'Job photo' }}" loading="lazy">
+            </a>
+            <figcaption>
+                {% if photo["name"] %}<strong>{{ photo["name"] }}</strong><br>{% endif %}
+                <small>Added {{ photo["created_at"]|localtime }}{% if photo["username"] %} by {{ photo["username"] }}{% endif %}</small>
+            </figcaption>
+        </figure>
+        {% endfor %} 
+    </div>
+    {% else %}
+    <p>No photos yet.</p>
+    {% endif %}
+    {% endfor %}
+
     <h2>Labor and total</h2>
     <form method="post" action="{{ url_for('jobs.set_labor', job_id=job['id']) }}">
         {{ csrf_field() }}

@@ -128,6 +128,28 @@ dd {
     white-space: pre-wrap;
 }
 
+.photos {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+    gap: 1rem;
+}
+
+.photo {
+    margin: 0;
+}
+
+.photo img {
+    display: block;
+    width: 100%;
+    height: 10rem;
+    object-fit: cover;
+}
+
+.photo figcaption {
+    margin-top: 0.3rem;
+    overflow-wrap: anywhere;
+}
+
 .stuck {
     background: #f8d7da;
     color: #842029;
