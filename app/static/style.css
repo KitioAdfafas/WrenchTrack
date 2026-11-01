@@ -150,6 +150,10 @@ dd {
     overflow-wrap: anywhere;
 }
 
+.photo details {
+    margin: 0.3rem 0;
+}
+
 .stuck {
     background: #f8d7da;
     color: #842029;

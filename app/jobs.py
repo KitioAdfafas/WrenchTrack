@@ -667,6 +667,47 @@ def photo_file(job_id, photo_id):
         abort(404)
     return send_from_directory(photo_folder(), photo["filename"])
 
+@bp.route("/<int:job_id>/photos/<int:photo_id>/rename", methods=("POST",))
+def rename_photo(job_id, photo_id):
+    get_job_or_404(job_id)
+    name = request.form.get("name", "").strip()
+
+    if len(name) > 100:
+        flash("A photo name can be at most 100 characters.")
+    else:
+        db = get_db()
+        cursor = db.execute(
+            "UPDATE photos SET name = ? WHERE id = ? AND job_id = ?",
+            (name or None, photo_id, job_id),
+        )
+        db.commit()
+
+        if cursor.rowcount:
+            flash("Photo renamed.", "ok")
+        else:
+            flash("That photo was not found.")
+
+    return redirect(url_for("jobs.detail", job_id=job_id))
+
+@bp.route("/<int:job_id>/photos/<int:photo_id>/delete", methods=("POST",))
+def delete_photo(job_id, photo_id):
+    get_job_or_404(job_id)
+    db = get_db()
+    photo = db.execute(
+        "SELECT filename FROM photos WHERE id = ? AND job_id = ?",
+        (photo_id, job_id),
+    ).fetchone()
+
+    if photo is None:
+        flash("That photo was not found.")
+    else:
+        db.execute("DELETE FROM photos WHERE id = ?", (photo_id,))
+        db.commit()
+        remove_photo_file(photo["filename"])
+        flash("Photo removed.", "ok")
+
+    return redirect(url_for("jobs.detail", job_id=job_id))      
+
 @bp.route("/<int:job_id>/labor", methods=("POST",))
 def set_labor(job_id):
     get_job_or_404(job_id)
