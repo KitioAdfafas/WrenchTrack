@@ -1,18 +1,18 @@
 # WrenchTrack
 
-WrenchTrack is a web app for auto repair shops to manage repair jobs from vehicle check-in to pickup. Built with **Python, Flask, and SQLite**.
+WrenchTrack is a web app for car repair shops. It tracks each repair job from check-in to pickup, and it's built with Python, Flask and SQLite.
 
 ## Features
 
 - Staff login; accounts are created from the command line
 - Create and edit repair jobs with customer and vehicle details
-- Track job status from **Received** to **Picked up**
+- Track job status from Received to Picked up
 - Search by customer, plate, make, model, phone number, VIN, or fault code, and filter by status
 - Dashboard for active jobs and jobs that may be waiting too long
 - Add notes, OBD fault codes, parts, and labor costs
 - Repair history: see earlier jobs linked by license plate or VIN
 - Print job tickets and export jobs to CSV
-- Back up the database and apply non-destructive database migrations
+- Back up the database and update it without losing data
 
 ## Getting started (Windows PowerShell)
 
@@ -49,6 +49,6 @@ See [TODO.md](TODO.md).
 
 ## Data attribution
 
-The car make and model list is sourced from
+The car make and model list comes from
 [car-list](https://github.com/matthlavacka/car-list)
 by [matthlavacka](https://github.com/matthlavacka).

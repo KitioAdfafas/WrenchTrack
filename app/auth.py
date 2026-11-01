@@ -22,7 +22,7 @@ PUBLIC_ENDPOINTS = {"auth.login", "health", "static"}
 @click.command("create-user")
 @click.argument("username")
 def create_user_command(username):
-    """Create a new user. The password is asked for securely."""
+    """Create a new user. The password is typed in hidden."""
     username = username.strip()
     if len(username) < 3:
         raise click.ClickException("Username must be at least 3 characters.")

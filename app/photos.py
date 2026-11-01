@@ -59,7 +59,7 @@ def prepare_photo(file):
         return None, NOT_A_PHOTO
 
 def clean_name_part(text):
-    """Keep only plain letters, digits and hyphens, at most 20 of them."""
+    """Strip text down to plain letters, digits and hyphens, 20 characters max."""
     text = unicodedata.normalize("NFKD", text)
     text = text.encode("ascii", "ignore").decode("ascii")
     return re.sub(r"[^A-Za-z0-9-]", "", text)[:20]

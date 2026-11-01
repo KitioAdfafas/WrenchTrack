@@ -193,7 +193,7 @@ for group in ALIAS_GROUPS:
 
 
 def can_fuzzy(word):
-    """Typo tolerance only for words of 4+ characters without digits."""
+    """True if the word is long enough for typo matching (4+ characters, no digits)."""
     return len(word) >= 4 and not any(ch.isdigit() for ch in word)
 
 def word_variants(word):
