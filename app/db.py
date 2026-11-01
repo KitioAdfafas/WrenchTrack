@@ -1,5 +1,6 @@
 import os
 import sqlite3
+import zipfile
 from datetime import datetime
 
 import click
@@ -63,9 +64,30 @@ def backup_db_command():
     copy.close()
     click.echo(f"Backup saved: {target}")
 
+@click.command("backup-photos")
+def backup_photos_command():
+    """Save every photo into one zip file in instance/backups."""
+    folder = os.path.join(current_app.instance_path, "photos")
+    photos = sorted(os.listdir(folder)) if os.path.isdir(folder) else []
+    if not photos:
+        click.echo("There are no photos to back up.")
+        return
+
+    backups = os.path.join(current_app.instance_path, "backups")
+    os.makedirs(backups, exist_ok=True)
+    stamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
+    target = os.path.join(backups, f"photos_{stamp}.zip")
+
+    with zipfile.ZipFile(target, "w", zipfile.ZIP_STORED) as archive:
+        for name in photos:
+            archive.write(os.path.join(folder, name), arcname=name)
+
+    click.echo(f"Backup saved: {target}")     
+
 def init_app(app):
     app.teardown_appcontext(close_db)
     app.cli.add_command(init_db_command)
     app.cli.add_command(migrate_db_command)
     app.cli.add_command(backup_db_command)
+    app.cli.add_command(backup_photos_command)
 
