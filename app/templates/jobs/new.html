@@ -4,7 +4,7 @@
 
 {% block content %}
 <h1>{{ heading|default("Add job") }}</h1>
-<form method="post">
+<form method="post" id="job-form">
     {{ csrf_field() }}
     <label for="customer_name">Customer name</label>
     <input name="customer_name" id="customer_name" value="{{ form['customer_name']}}" required autofocus>
@@ -52,27 +52,10 @@
 
     <button type="submit">{{ button|default("Save job") }}</button>
 
-    {% if related %}
+    {% if heading is not defined %}
     <dialog id="dup-dialog">
-        <h2>This car has been in the shop before</h2>
-        <p>Earlier jobs found: {{ related|length }}. Click one to open it in a new tab.</p>
-        <ul>
-            {% for r in related %}
-            <li>
-                <a href="{{ url_for('jobs.detail', job_id=r['id']) }}" target="_blank">{{ r["date_received"] }}, {{ r["plate"] }}, {{ r["make"] }} {{ r["model"] }}</a>
-                ({{ r["reason"] }})
-            </li>
-            {% endfor %}
-        </ul>
-        <p>Saving creates a new, separate job. The old jobs are not changed.</p>
-        <button type="submit" name="confirm_duplicate" value="1">Save as new job</button>
-        <button type="button" id="dup-close">Go back and edit</button>
+        {% if related %}{% include "jobs/_same_car.html" %}{% endif %}
     </dialog>
-    <script>
-        const dupDialog = document.getElementById("dup-dialog");
-        dupDialog.showModal();
-        document.getElementById("dup-close").addEventListener("click", () => dupDialog.close());
-    </script>
     {% endif %}
 </form>
 
@@ -100,4 +83,63 @@
     makeInput.addEventListener("input", fillModels);
     fillModels();
 </script>
+{% if heading is not defined %}
+<script>
+    const jobForm = document.getElementById("job-form");
+    const dupDialog = document.getElementById("dup-dialog");
+    let checking = false;
+
+    async function findSameCar() {
+        const params = new URLSearchParams({
+            plate: document.getElementById("plate").value,
+            vin: document.getElementById("vin").value,
+        });
+        try {
+            const response = await fetch("{{ url_for('jobs.same_car') }}?" + params);
+            if (response.ok && !response.redirected) {
+                return await response.text();
+            }
+        } catch (error) {
+            console.error(error);
+        }
+        return "";
+    }
+
+    async function checkSameCar(event) {
+        if (event.submitter && event.submitter.name === "confirm_duplicate") {
+            return;
+        }
+        event.preventDefault();
+        if (checking) {
+            return;
+        }
+
+        checking = true;
+        const html = await findSameCar();
+        if (html.trim()) {
+            checking = false;
+            dupDialog.innerHTML = html;
+            dupDialog.showModal();
+        } else {
+            jobForm.submit();
+        }
+    }
+
+    jobForm.addEventListener("submit", checkSameCar);
+
+    dupDialog.addEventListener("click", (event) => {
+        if (event.target.id === "dup-close") {
+            dupDialog.close();
+        }
+    });
+
+    window.addEventListener("pageshow", () => {
+        checking = false;
+    });
+
+    if (dupDialog.children.length) {
+        dupDialog.showModal();
+    }
+</script>
+{% endif %}
 {% endblock %}

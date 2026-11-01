@@ -367,6 +367,15 @@ def new():
 
     return render_template("jobs/new.html", form=form, fuel_types=FUEL_TYPES, car_models=CAR_MODELS)
 
+@bp.route("/same-car")
+def same_car():
+    plate = request.args.get("plate", "").strip().upper()
+    vin = request.args.get("vin", "").strip().upper()
+    related = find_related_jobs(plate, vin)
+    if not related:
+        return ""
+    return render_template("jobs/_same_car.html", related=related)
+
 @bp.route("/<int:job_id>")
 def detail(job_id):
     job = get_job_or_404(job_id)
