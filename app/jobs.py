@@ -310,6 +310,47 @@ def index():
         statuses=STATUSES,
     )
 
+def ask_for_photos_again():
+    """Remind the user when the form comes back after photos were chosen."""
+    if any(file.filename for file in request.files.getlist("photos")):
+        flash("Please choose the photos again.")
+
+def read_new_photos():
+    """Check every photo on the new job form. Return (photos, error)."""
+    files = [file for file in request.files.getlist("photos") if file.filename]
+    names = request.form.getlist("photo_names")
+
+    photos = []
+    for position, file in enumerate(files):
+        name = names[position].strip() if position < len(names) else ""
+        if len(name) > 100:
+            return [], f"{file.filename}: A photo name can be at most 100 characters."
+
+        data, error = prepare_photo(file)
+        if error:
+            return [], f"{file.filename}: {error}"
+        photos.append((data, name))
+
+    return photos, None
+
+def save_job_photos(db, job, photos):
+    """Save the photos as Before and commit. Written files are removed on failure."""
+    written = []
+    try:
+        for data, name in photos:
+            filename = save_photo(data, job)
+            written.append(filename)
+            db.execute(
+                "INSERT INTO photos (job_id, filename, name, stage, created_by) "
+                "VALUES (?, ?, ?, ?, ?)",
+                (job["id"], filename, name or None, "before", g.user["id"]),
+            )
+        db.commit()
+    except (OSError, sqlite3.Error):
+        for filename in written:
+            remove_photo_file(filename)
+        raise
+
 @bp.route("/new", methods=("GET", "POST"))
 def new():
     if request.method == "POST":
@@ -318,6 +359,7 @@ def new():
         if error is None and not request.form.get("confirm_duplicate"):
             related = find_related_jobs(values["plate"], values["vin"])
             if related:
+                ask_for_photos_again()
                 return render_template(
                     "jobs/new.html",
                     form=values,
@@ -325,6 +367,9 @@ def new():
                     car_models=CAR_MODELS,
                     related=related,
                 )
+
+        if error is None:
+            photos, error = read_new_photos()
 
         if error is None:
             db = get_db()
@@ -348,16 +393,18 @@ def new():
                     g.user["id"],
                 ),
             )
+            job_id = cursor.lastrowid
             db.execute(
                 "INSERT INTO status_history (job_id, from_status, to_status, changed_by) "
                 "VALUES (?, NULL, ?, ?)",
-                (cursor.lastrowid, STATUSES[0], g.user["id"]),
+                (job_id, STATUSES[0], g.user["id"]),
             )
-            db.commit()
+            save_job_photos(db, get_job_or_404(job_id), photos)
             flash("Job saved.", "ok")
             return redirect(url_for("jobs.index"))
 
         flash(error)
+        ask_for_photos_again()
         form = values
     else:
         form = {

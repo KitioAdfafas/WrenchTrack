@@ -4,7 +4,7 @@
 
 {% block content %}
 <h1>{{ heading|default("Add job") }}</h1>
-<form method="post" id="job-form">
+<form method="post" id="job-form" enctype="multipart/form-data">
     {{ csrf_field() }}
     <label for="customer_name">Customer name</label>
     <input name="customer_name" id="customer_name" value="{{ form['customer_name']}}" required autofocus>
@@ -49,6 +49,11 @@
 
     <label for="problem">Problem described by the customer</label>
     <textarea name="problem" id="problem" rows="4" required>{{ form['problem'] }}</textarea>
+
+    {% if heading is not defined %}
+    <label for="photos">Photos (optional)</label>
+    <input type="file" name="photos" id="photos" accept=".jpg,.jpeg,.png,.heic,.heif,image/*" multiple>
+    {% endif %}
 
     <button type="submit">{{ button|default("Save job") }}</button>
 
