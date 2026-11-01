@@ -154,6 +154,25 @@ dd {
     margin: 0.3rem 0;
 }
 
+.photo-box {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.photo-box img {
+    width: 4rem;
+    height: 4rem;
+    object-fit: cover;
+}
+
+.photo-box label {
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
 .stuck {
     background: #f8d7da;
     color: #842029;
