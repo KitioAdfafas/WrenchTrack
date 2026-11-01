@@ -2,6 +2,7 @@ import csv
 import difflib
 import io
 import json
+import sqlite3
 from datetime import date, datetime, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -21,11 +22,13 @@ from flask import (
 )
 
 from .db import get_db
-from .photos import photo_folder
+from .photos import photo_folder, prepare_photo, remove_photo_file, save_photo
 
 bp = Blueprint("jobs", __name__, url_prefix="/jobs")
 
 FUEL_TYPES = ["petrol", "diesel", "hybrid", "electric"]
+
+PHOTO_STAGES = ["before", "after"]
 
 STATUSES = [
     "Received",
@@ -78,6 +81,12 @@ def next_status(status):
     if position == len(STATUSES) - 1:
         return None
     return STATUSES[position + 1]
+
+def default_photo_stage(status):
+    """Before until the repair starts, After from then on."""
+    if STATUSES.index(status) < STATUSES.index("Repairing"):
+        return "before"
+    return "after"
 
 @bp.app_template_filter("localtime")
 def localtime(value):
@@ -399,6 +408,7 @@ def detail(job_id):
         total=total,
         next_label=next_status(job["status"]),
         related_count=related_count,
+        photo_stage=default_photo_stage(job["status"]),
     )
 
 @bp.route("/<int:job_id>/edit", methods=("GET", "POST"))
@@ -593,6 +603,47 @@ def delete_part(job_id, part_id):
     else:
         flash("That part was not found.")
 
+    return redirect(url_for("jobs.detail", job_id=job_id))
+
+@bp.route("/<int:job_id>/photos", methods=("POST",))
+def add_photo(job_id):
+    job = get_job_or_404(job_id)
+    name = request.form.get("name", "").strip()
+    stage = request.form.get("stage", "")
+
+    error = None
+    if len(name) > 100:
+        error = "A photo name can be at most 100 characters."
+    elif stage not in PHOTO_STAGES:
+        error = "Pick Before or After."
+    else:
+        data, error = prepare_photo(request.files.get("photo"))
+
+    if error:
+        flash(error)
+    else:
+        filename = save_photo(data, job)
+        db = get_db()
+        try:
+            db.execute(
+                "INSERT INTO photos (job_id, filename, name, stage, created_by) "
+                "VALUES (?, ?, ?, ?, ?)",
+                (job_id, filename, name or None, stage, g.user["id"]),
+            )
+            db.commit()
+        except sqlite3.Error:
+            remove_photo_file(filename)
+            raise
+        flash("Photo added.", "ok")
+
+    return redirect(url_for("jobs.detail", job_id=job_id))
+
+@bp.app_errorhandler(413)
+def upload_too_large(error):
+    flash("That upload is too large.")
+    job_id = (request.view_args or {}).get("job_id")
+    if job_id is None:
+        return redirect(url_for("jobs.index"))
     return redirect(url_for("jobs.detail", job_id=job_id))
 
 @bp.route("/<int:job_id>/photos/<int:photo_id>")

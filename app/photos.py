@@ -68,6 +68,13 @@ def photo_folder():
     """Return the private folder where photos are kept."""
     return os.path.join(current_app.instance_path, "photos")
 
+def remove_photo_file(filename):
+    """Delete a saved photo. A file that is already gone is fine."""
+    try:
+        os.remove(os.path.join(photo_folder(), filename))
+    except FileNotFoundError:
+        pass
+
 def save_photo(data, job):
     """Write JPEG bytes to the photo folder and return the new file name."""
     folder = photo_folder()

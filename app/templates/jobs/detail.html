@@ -119,6 +119,21 @@
     <p>No parts yet.</p>
     {% endif %}
 
+    <h2>Photos</h2>
+    <form method="post" enctype="multipart/form-data" action="{{ url_for('jobs.add_photo', job_id=job['id']) }}">
+        {{ csrf_field() }}
+        <label for="photo">Photo</label>
+        <input type="file" name="photo" id="photo" accept=".jpg,.jpeg,.png,.heic,.heif,image/*" required>
+
+        <label for="photo_name">Name</label>
+        <input name="name" id="photo_name" maxlength="100">
+
+        <label><input type="radio" name="stage" value="before" {% if photo_stage == "before" %}checked{% endif %}> Before</label>
+        <label><input type="radio" name="stage" value="after" {% if photo_stage == "after" %}checked{% endif %}> After</label>
+
+        <button type="submit">Add photo</button>
+    </form>
+
     <h2>Labor and total</h2>
     <form method="post" action="{{ url_for('jobs.set_labor', job_id=job['id']) }}">
         {{ csrf_field() }}

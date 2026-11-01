@@ -2,7 +2,7 @@
 
 ## In progress
 
-- Photos on jobs: upload on the new job form and on the job page, a name for each photo, before and after groups, automatic resizing, HEIC support and a backup-photos command. See docs/photos-plan.md.
+- Photos on jobs. Working so far: upload from the job page with a name and a Before or After label, automatic resizing and HEIC support. Still to do: before and after groups on the job page, renaming and removing photos, upload on the new job form and a backup-photos command. See docs/photos-plan.md.
 
 ## Next, roughly in order
 
