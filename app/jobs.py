@@ -421,7 +421,7 @@ def new():
             )
             save_job_photos(db, get_job_or_404(job_id), photos, "before")
             flash("Job saved.", "ok")
-            return redirect(url_for("jobs.index"))
+            return redirect(url_for("jobs.detail", job_id=job_id))
 
         flash(error)
         ask_for_photos_again()

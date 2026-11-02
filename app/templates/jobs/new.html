@@ -8,7 +8,7 @@
     {{ csrf_field() }}
 
     <label for="plate">Plate</label>
-    <input name="plate" id="plate" value="{{ form['plate']}}" required autofocus>
+    <input name="plate" id="plate" value="{{ form['plate']}}" required autofocus autocomplete="off">
     {% if heading is not defined %}
     <small id="plate-note" data-url="{{ url_for('jobs.last_visit') }}"></small>
     {% endif %}
