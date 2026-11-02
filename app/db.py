@@ -82,7 +82,7 @@ def backup_photos_command():
         for name in photos:
             archive.write(os.path.join(folder, name), arcname=name)
 
-    click.echo(f"Backup saved: {target}")     
+    click.echo(f"Backup saved: {target}")
 
 def init_app(app):
     app.teardown_appcontext(close_db)

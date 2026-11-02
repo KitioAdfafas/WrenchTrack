@@ -10,9 +10,10 @@ WrenchTrack is a web app for car repair shops. It tracks each repair job from ch
 - Search by customer, plate, make, model, phone number, VIN, or fault code, and filter by status
 - Dashboard for active jobs and jobs that may be waiting too long
 - Add notes, OBD fault codes, parts, and labor costs
+- Add photos to a job (JPG, PNG or HEIC) with a name and a Before or After label
 - Repair history: see earlier jobs linked by license plate or VIN
 - Print job tickets and export jobs to CSV
-- Back up the database and update it without losing data
+- Back up the database and photos, and update the database without losing data
 
 ## Getting started (Windows PowerShell)
 
@@ -37,11 +38,13 @@ flask --app app run --debug
 
 Open [http://127.0.0.1:5000](http://127.0.0.1:5000) and log in.
 
-**Warning:** `init-db` deletes existing data. For an existing database, use `flask --app app migrate-db` instead. To make a backup, run `flask --app app backup-db`.
+**Warning:** `init-db` deletes existing data. For an existing database, use `flask --app app migrate-db` instead. To make a backup, run `flask --app app backup-db`. To back up photos, run `flask --app app backup-photos`.
 
 ## Settings
 
 Set `SHOP_TIMEZONE` in `.env` to choose the shop's time zone (defaults to `Europe/Skopje`), and `CURRENCY` to choose the currency shown after amounts (defaults to `MKD`).
+
+Set `PHOTO_QUALITY` to choose the JPEG quality of the saved photos (defaults to `75`), and `PHOTO_MAX_SIDE` to choose the longest side in pixels (defaults to `2000`).
 
 ## Planned work
 

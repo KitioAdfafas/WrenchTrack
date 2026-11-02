@@ -1,9 +1,5 @@
 # TODO
 
-## In progress
-
-- Photos on jobs. Working so far: upload from the job page with a name and a Before or After label, automatic resizing and HEIC support. Still to do: before and after groups on the job page, renaming and removing photos, upload on the new job form and a backup-photos command. See docs/photos-plan.md.
-
 ## Next, roughly in order
 
 - Plate autofill: when a known plate is typed on a new job, fill in the customer and car details from the last visit.
@@ -23,6 +19,8 @@
 
 ## Done
 
+- Photos on jobs: add photos on the new job form or the job page, with a name and a Before or After label. The job page shows them in two groups, and they can be renamed or removed. Uploads are checked and resized automatically, HEIC is supported, and backup-photos saves them all to one zip.
+- Same-car warning: it now opens without reloading the page, so the form and any chosen photos stay as they were.
 - Wider search: the job list search also finds jobs by phone number, VIN and fault code.
 - Currency setting: CURRENCY in .env (MKD by default) is shown after every amount on the detail, print and dashboard pages.
 - Typo and small error fixes across the README, templates and code. This fixed the broken print page, renamed "previous repairs" to "Repair history" in the README and the URL, and removed trailing spaces.
