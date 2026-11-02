@@ -315,8 +315,8 @@ def ask_for_photos_again():
     if any(file.filename for file in request.files.getlist("photos")):
         flash("Please choose the photos again.")
 
-def read_new_photos():
-    """Check every photo on the new job form. Return (photos, error)."""
+def read_photos():
+    """Check every chosen photo. Return (photos, error)."""
     files = [file for file in request.files.getlist("photos") if file.filename]
     names = request.form.getlist("photo_names")
 
@@ -333,8 +333,8 @@ def read_new_photos():
 
     return photos, None
 
-def save_job_photos(db, job, photos):
-    """Save the photos as Before and commit. Written files are removed on failure."""
+def save_job_photos(db, job, photos, stage):
+    """Save the photos and commit. Written files are removed on failure."""
     written = []
     try:
         for data, name in photos:
@@ -343,7 +343,7 @@ def save_job_photos(db, job, photos):
             db.execute(
                 "INSERT INTO photos (job_id, filename, name, stage, created_by) "
                 "VALUES (?, ?, ?, ?, ?)",
-                (job["id"], filename, name or None, "before", g.user["id"]),
+                (job["id"], filename, name or None, stage, g.user["id"]),
             )
         db.commit()
     except (OSError, sqlite3.Error):
@@ -369,7 +369,7 @@ def new():
                 )
 
         if error is None:
-            photos, error = read_new_photos()
+            photos, error = read_photos()
 
         if error is None:
             db = get_db()
@@ -399,7 +399,7 @@ def new():
                 "VALUES (?, NULL, ?, ?)",
                 (job_id, STATUSES[0], g.user["id"]),
             )
-            save_job_photos(db, get_job_or_404(job_id), photos)
+            save_job_photos(db, get_job_or_404(job_id), photos, "before")
             flash("Job saved.", "ok")
             return redirect(url_for("jobs.index"))
 
@@ -675,33 +675,25 @@ def delete_part(job_id, part_id):
 @bp.route("/<int:job_id>/photos", methods=("POST",))
 def add_photo(job_id):
     job = get_job_or_404(job_id)
-    name = request.form.get("name", "").strip()
     stage = request.form.get("stage", "")
 
     error = None
-    if len(name) > 100:
-        error = "A photo name can be at most 100 characters."
-    elif stage not in PHOTO_STAGES:
+    if stage not in PHOTO_STAGES:
         error = "Pick Before or After."
     else:
-        data, error = prepare_photo(request.files.get("photo"))
+        photos, error = read_photos()
+        if not photos and not error:
+            error = "Choose a photo to upload."
 
     if error:
         flash(error)
+        ask_for_photos_again()
     else:
-        filename = save_photo(data, job)
-        db = get_db()
-        try:
-            db.execute(
-                "INSERT INTO photos (job_id, filename, name, stage, created_by) "
-                "VALUES (?, ?, ?, ?, ?)",
-                (job_id, filename, name or None, stage, g.user["id"]),
-            )
-            db.commit()
-        except sqlite3.Error:
-            remove_photo_file(filename)
-            raise
-        flash("Photo added.", "ok")
+        save_job_photos(get_db(), job, photos, stage)
+        if len(photos) == 1:
+            flash("Photo added.", "ok")
+        else:
+            flash(f"{len(photos)} photos added.", "ok")
 
     return redirect(url_for("jobs.detail", job_id=job_id))
 

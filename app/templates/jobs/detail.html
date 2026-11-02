@@ -122,16 +122,14 @@
     <h2>Photos</h2>
     <form method="post" enctype="multipart/form-data" action="{{ url_for('jobs.add_photo', job_id=job['id']) }}">
         {{ csrf_field() }}
-        <label for="photo">Photo</label>
-        <input type="file" name="photo" id="photo" accept=".jpg,.jpeg,.png,.heic,.heif,image/*" required>
-
-        <label for="photo_name">Name</label>
-        <input name="name" id="photo_name" maxlength="100">
+        <label for="photos">Photos</label>
+        <input type="file" name="photos" id="photos" accept=".jpg,.jpeg,.png,.heic,.heif,image/*" multiple required>
+        <div id="photo-boxes"></div>
 
         <label><input type="radio" name="stage" value="before" {% if photo_stage == "before" %}checked{% endif %}> Before</label>
         <label><input type="radio" name="stage" value="after" {% if photo_stage == "after" %}checked{% endif %}> After</label>
 
-        <button type="submit">Add photo</button>
+        <button type="submit">Add photos</button>
     </form>
 
     {% for title, group in [("Before", before_photos), ("After", after_photos)] %}
@@ -221,4 +219,5 @@
     {% else %}
         <p>No notes yet.</p>
     {% endfor %}
+    <script src="{{ url_for('static', filename='photo_boxes.js') }}"></script>
 {% endblock %}
