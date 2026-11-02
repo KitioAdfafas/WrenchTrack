@@ -6,8 +6,15 @@
 <h1>{{ heading|default("Add job") }}</h1>
 <form method="post" id="job-form" enctype="multipart/form-data">
     {{ csrf_field() }}
+
+    <label for="plate">Plate</label>
+    <input name="plate" id="plate" value="{{ form['plate']}}" required autofocus>
+    {% if heading is not defined %}
+    <small id="plate-note" data-url="{{ url_for('jobs.last_visit') }}"></small>
+    {% endif %}
+
     <label for="customer_name">Customer name</label>
-    <input name="customer_name" id="customer_name" value="{{ form['customer_name']}}" required autofocus>
+    <input name="customer_name" id="customer_name" value="{{ form['customer_name']}}" required>
 
     <label for="phone">Phone</label>
     <input name="phone" id="phone" value="{{ form['phone']}}" required>
@@ -24,9 +31,6 @@
 
     <label for="year">Year</label>
     <input type="number" name="year" id="year" value="{{ form['year']}}" required>
-
-    <label for="plate">Plate</label>
-    <input name="plate" id="plate" value="{{ form['plate']}}" required>
 
     <label for="vin">VIN (optional)</label>
     <input name="vin" id="vin" value="{{ form['vin']}}">
@@ -91,6 +95,7 @@
 </script>
 {% if heading is not defined %}
 <script src="{{ url_for('static', filename='photo_boxes.js') }}"></script>
+<script src="{{ url_for('static', filename='plate_autofill.js') }}"></script>
 <script>
     const jobForm = document.getElementById("job-form");
     const dupDialog = document.getElementById("dup-dialog");

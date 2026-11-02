@@ -75,6 +75,18 @@ REQUIRED_FIELDS = [
     "date_received",
 ]
 
+LAST_VISIT_FIELDS = [
+    "customer_name",
+    "phone",
+    "make",
+    "model",
+    "year",
+    "vin",
+    "engine",
+    "fuel_type",
+    "date_received",
+]
+
 def next_status(status):
     """Return the status that follows this one, or None if it is the last."""
     position = STATUSES.index(status)
@@ -239,7 +251,8 @@ def find_related_jobs(plate, vin, exclude_id=None):
     plate_key = squash(plate)
     vin_key = squash(vin or "")
     rows = get_db().execute(
-        "SELECT id, plate, vin, customer_name, make, model, status, date_received, problem "
+        "SELECT id, plate, vin, customer_name, phone, make, model, year, engine, "
+        "fuel_type, status, date_received, problem "
         "FROM jobs WHERE id != ? ORDER BY date_received DESC, id DESC",
         (exclude_id or 0,),
     ).fetchall()
@@ -422,6 +435,14 @@ def same_car():
     if not related:
         return ""
     return render_template("jobs/_same_car.html", related=related)
+
+@bp.route("/last-visit")
+def last_visit():
+    plate = request.args.get("plate", "").strip().upper()
+    related = find_related_jobs(plate, "")
+    if not related:
+        return {}
+    return {field: related[0][field] or "" for field in LAST_VISIT_FIELDS}
 
 @bp.route("/<int:job_id>")
 def detail(job_id):
