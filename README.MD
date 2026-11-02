@@ -6,6 +6,7 @@ WrenchTrack is a web app for car repair shops. It tracks each repair job from ch
 
 - Staff login; accounts are created from the command line
 - Create and edit repair jobs with customer and vehicle details
+- Plate autofill: a known plate fills in the customer and car details from the last visit
 - Track job status from Received to Picked up
 - Search by customer, plate, make, model, phone number, VIN, or fault code, and filter by status
 - Dashboard for active jobs and jobs that may be waiting too long
@@ -13,6 +14,7 @@ WrenchTrack is a web app for car repair shops. It tracks each repair job from ch
 - Add photos to a job (JPG, PNG or HEIC) with a name and a Before or After label
 - Repair history: see earlier jobs linked by license plate or VIN
 - Print job tickets and export jobs to CSV
+- Prepare a "car is ready" message with the total, ready to copy to the customer
 - Back up the database and photos, and update the database without losing data
 
 ## Getting started (Windows PowerShell)

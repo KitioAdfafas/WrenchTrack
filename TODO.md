@@ -27,5 +27,4 @@
 
 ## Housekeeping
 
-- Remove the unused home.html or find a use for it.
 - Take new README screenshots.

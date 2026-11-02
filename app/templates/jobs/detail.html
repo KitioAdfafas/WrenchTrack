@@ -30,7 +30,7 @@
         <dt>Customer</dt>
         <dd>{{ job["customer_name"] }}</dd>
         <dt>Phone</dt>
-        <dd>{{ job["phone"] }}</dd>
+        <dd><a href="tel:{{ job['phone'] }}">{{ job["phone"] }}</a></dd>
         <dt>Car</dt>
         <dd>{{ job["make"] }} {{ job["model"] }}, {{ job["year"]}}</dd>
         <dt>Engine</dt>
