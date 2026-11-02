@@ -705,6 +705,14 @@ def upload_too_large(error):
         return redirect(url_for("jobs.index"))
     return redirect(url_for("jobs.detail", job_id=job_id))
 
+@bp.app_errorhandler(404)
+def page_not_found(error):
+    return render_template("404.html"), 404
+
+@bp.app_errorhandler(500)
+def server_error(error):
+    return render_template("500.html"), 500
+
 @bp.route("/<int:job_id>/photos/<int:photo_id>")
 def photo_file(job_id, photo_id):
     photo = get_db().execute(

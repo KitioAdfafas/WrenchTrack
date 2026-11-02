@@ -213,7 +213,7 @@
 
     {% for note in notes %}
         <div class="note">
-            <small>{{ note["created_at"] }} UTC</small>
+            <small>{{ note["created_at"]|localtime }}</small>
             <p>{{ note["body"] }}</p>
         </div>
     {% else %}
