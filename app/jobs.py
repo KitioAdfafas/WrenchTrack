@@ -150,6 +150,13 @@ def calculate_totals(job, parts):
     total = round(parts_total + job["labor_cost"], 2)
     return parts_total, total
 
+def ready_message(job, total):
+    """Build the pickup message for the customer."""
+    return (
+        f"Hello {job['customer_name']}, your {job['make']} {job['model']} "
+        f"({job['plate']}) is ready for pickup. Total: {money(total)}."
+    )
+
 def read_job_form(form):
     """Clean the submitted form. Returns (values, error). error is None if valid."""
     values = {
@@ -482,6 +489,7 @@ def detail(job_id):
     after_photos = [photo for photo in photos if photo["stage"] == "after"]
 
     related_count = len(find_related_jobs(job["plate"], job["vin"], exclude_id=job_id))
+    ready_text = ready_message(job, total) if job["status"] == "Ready" else None
 
     return render_template(
         "jobs/detail.html",
@@ -494,6 +502,7 @@ def detail(job_id):
         total=total,
         next_label=next_status(job["status"]),
         related_count=related_count,
+        ready_text=ready_text,
         photo_stage=default_photo_stage(job["status"]),
         before_photos=before_photos,
         after_photos=after_photos,

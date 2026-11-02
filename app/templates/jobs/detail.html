@@ -19,6 +19,13 @@
         {% endif %}
     </p>
 
+    {% if ready_text %}
+    <label for="ready-message">Message for the customer</label>
+    <textarea id="ready-message" rows="3">{{ ready_text }}</textarea>
+    <p><button type="button" id="copy-message">Copy message</button></p>
+    <script src="{{ url_for('static', filename='copy_message.js') }}"></script>
+    {% endif %}
+
     <dl>
         <dt>Customer</dt>
         <dd>{{ job["customer_name"] }}</dd>

@@ -2,10 +2,8 @@
 
 ## Next, roughly in order
 
-- Plate autofill: when a known plate is typed on a new job, fill in the customer and car details from the last visit.
 - Paid or unpaid flag on jobs, since a car can be picked up before the bill is paid.
 - Pagination for the job list.
-- A "car is ready" button that prepares a message to send to the customer.
 - A "Waiting for approval" status for when the customer has to OK the repair first. This touches the status list, stuck thresholds, CSS, the CHECK constraint and a migration, so it needs care.
 - Assign a mechanic to each job.
 - Service reminders based on mileage and the date of the last visit.
@@ -19,6 +17,8 @@
 
 ## Done
 
+- "Car is ready" message: jobs in Ready show a prepared message with the total, ready to edit and copy to the customer.
+- Plate autofill: typing a known plate on a new job fills in the customer and car details from the last visit, without replacing anything already typed.
 - Photos on jobs: add photos on the new job form or the job page, with a name and a Before or After label. The job page shows them in two groups, and they can be renamed or removed. Uploads are checked and resized automatically, HEIC is supported, and backup-photos saves them all to one zip.
 - Same-car warning: it now opens without reloading the page, so the form and any chosen photos stay as they were.
 - Wider search: the job list search also finds jobs by phone number, VIN and fault code.
