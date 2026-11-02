@@ -8,6 +8,7 @@
             table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; }
             th, td { border: 1px solid #000; padding: 4px 8px; text-align: left; }
             .no-print { margin-bottom: 1rem; }
+            .keep-lines { white-space: pre-wrap; }
             @media print { .no-print { display: none; } }
         </style>
     </head>
@@ -26,7 +27,7 @@
                 <tr><th>VIN</th><td>{{ job["vin"] or "not given"}}</td></tr>
                 <tr><th>Mileage</th><td>{{ job["mileage"] }} km</td></tr>
                 <tr><th>Date received</th><td>{{ job["date_received"] }}</td></tr>
-                <tr><th>Problem</th><td>{{ job["problem"] }}</td></tr>
+                <tr><th>Problem</th><td class="keep-lines">{{ job["problem"] }}</td></tr>
                 <tr><th>Fault codes</th>
                     <td>
                         {% for fc in fault_codes %}

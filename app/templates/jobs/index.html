@@ -53,7 +53,8 @@
       <td>
         {% set following = next_status(job["status"]) %}
         {% if following %}
-          <form class="inline-form" method="post" action="{{ url_for('jobs.advance', job_id=job['id']) }}">
+          <form class="inline-form" method="post" action="{{ url_for('jobs.advance', job_id=job['id']) }}"
+                {% if following == "Picked up" %}onsubmit="return confirm('Mark this car as picked up? This cannot be undone.')"{% endif %}>
             {{ csrf_field() }}
             <input type="hidden" name="back" value="list">
             <input type="hidden" name="q" value="{{ q }}">

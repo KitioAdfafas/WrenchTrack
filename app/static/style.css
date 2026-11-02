@@ -117,6 +117,10 @@ dd {
     margin: 0;
 }
 
+.keep-lines {
+    white-space: pre-wrap;
+}
+
 .note {
     border-left: 3px solid #ccc;
     padding-left: 0.8rem;
