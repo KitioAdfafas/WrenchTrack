@@ -5,3 +5,7 @@ instance/
 .env
 .vscode/
 CLAUDE.md
+.CLAUDE
+.impeccable
+DESIGN.md
+PRODUCT.md

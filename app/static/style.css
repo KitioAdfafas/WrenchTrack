@@ -1,5 +1,94 @@
+@font-face {
+    font-family: "Titillium Web";
+    src: url("fonts/titillium-web-v19-latin_latin-ext-regular.woff2")
+    format("woff2");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Titillium Web";
+    src: url("fonts/titillium-web-v19-latin_latin-ext-600.woff2")
+    format("woff2");
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Titillium Web";
+    src: url("fonts/titillium-web-v19-latin_latin-ext-700.woff2")
+    format("woff2");
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Titillium Web";
+    src: url("fonts/titillium-web-v19-latin_latin-ext-700italic.woff2")
+    format("woff2");
+    font-weight: 700;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Titillium Web";
+    src: url("fonts/titillium-web-v19-latin_latin-ext-900.woff2")
+    format("woff2");
+    font-weight: 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+:root {
+    /* Frame: top bar, postition tags, main button */
+    --carbon: #15171a;
+    --carbon-raised: #24272c;
+    --on-carbon: #c3c7cd;
+
+    /* Neutrals */
+    --track: #f1f2f4;
+    --panel: #ffffff;
+    --selected: #f6f7f9;
+    --muted: #5a6068;
+    --hairline: #e3e5e8;
+
+    /* Red is only for late or stuck jobs */
+    --late: #e10600;
+    --plate-blue: #1f4fbf;
+
+    /* One color per status, named after the status */
+    --received: #677489;
+    --diagnosing: #138a8a;
+    --waiting-for-parts: #e0761b;
+    --repairing: #2457c5;
+    --ready: #2e8b3e;
+    --picked-up: #9aa0a8;
+
+    /* Corners */
+    --radius-panel: 14px;
+    --radius-button: 10px;
+    --radius-chip: 8px;
+    --radius-plate: 6px;
+
+    /* Panel lift: a tight contact shadow plus a wide soft one */
+
+    --lift: 0 1px 2px rgba(21, 23, 26, 0.08), 0 10px 28px
+    rgba(21, 23, 26, 0.07);
+}
+
 body {
-    font-family: system-ui, sans-serif;
+    margin: 0;
+    font-family: "Titillium Web", sans-serif;
+    color: var(--carbon);
+    background: var(--track);
+    font-variant-numeric: tabular-nums;
+}
+
+main {
     max-width: 60rem;
     margin: 0 auto;
     padding: 1rem;
@@ -9,8 +98,6 @@ nav {
     display: flex;
     gap: 1rem;
     align-items: center;
-    border-bottom: 1px solid #ccc;
-    padding-bottom: 0.5rem;
 }
 
 .brand {
