@@ -131,10 +131,17 @@ def days_in_status(changed_at):
     return max(0, (datetime.now(timezone.utc) - changed).days)
 
 @bp.app_template_global()
+def days_late(job):
+    """Days past the stuck limit, the first late day counts as 1. Zero if not late."""
+    limit = STUCK_AFTER_DAYS.get(job["status"])
+    if limit is None:
+        return 0
+    return max(0, days_in_status(job["status_changed_at"]) - limit + 1)
+
+@bp.app_template_global()
 def is_stuck(job):
     """True if the job has sat in its current status for too long."""
-    limit = STUCK_AFTER_DAYS.get(job["status"])
-    return limit is not None and days_in_status(job["status_changed_at"]) >= limit
+    return days_late(job) > 0
 
 def get_job_or_404(job_id):
     job = get_db().execute(
@@ -578,6 +585,8 @@ def advance(job_id):
 
     if request.form.get("back") == "detail":
         return redirect(url_for("jobs.detail", job_id=job_id))
+    if request.form.get("back") == "dashboard":
+        return redirect(url_for("jobs.dashboard", job=job_id))
     return redirect(
         url_for(
             "jobs.index",
@@ -935,6 +944,15 @@ def export_csv():
         headers={"Content-Disposition": f"attachment; filename={filename}"},
     )
 
+def pick_selected(open_jobs, job_id):
+    """Return the open job with this id, or the top of the tower if it is not there."""
+    for job in open_jobs:
+        if job["id"] == job_id:
+            return job
+    if open_jobs:
+        return open_jobs[0]
+    return None
+
 @bp.route("/dashboard")
 def dashboard():
     db = get_db()
@@ -947,8 +965,8 @@ def dashboard():
         counts[row["status"]] = row["n"]
 
     open_jobs = db.execute(
-        "SELECT id, plate, make, model, customer_name, status, date_received, "
-        "status_changed_at, "
+        "SELECT id, plate, make, model, year, engine, mileage, customer_name, phone, "
+        "status, date_received, status_changed_at, labor_cost, "
         "MAX(0, CAST(julianday(date('now')) - julianday(date_received) AS INTEGER)) "
         "AS days_in_shop "
         "FROM jobs WHERE status != ? ORDER BY date_received, id",
@@ -957,6 +975,20 @@ def dashboard():
     oldest = open_jobs[:5]
     stuck = [j for j in open_jobs if is_stuck(j)]
     stuck.sort(key=lambda j: days_in_status(j["status_changed_at"]), reverse=True)
+
+    selected = pick_selected(open_jobs, request.args.get("job", type=int))
+    selected_codes = []
+    selected_total = 0
+    if selected is not None:
+        selected_codes = db.execute(
+            "SELECT code, description FROM fault_codes WHERE job_id = ? ORDER BY id",
+            (selected["id"],),
+        ).fetchall()
+        parts = db.execute(
+            "SELECT quantity, price FROM parts WHERE job_id = ?",
+            (selected["id"],),
+        ).fetchall()
+        _, selected_total = calculate_totals(selected, parts)
 
     zone = ZoneInfo(current_app.config["SHOP_TIMEZONE"])
     month_start = datetime.now(zone).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
@@ -983,4 +1015,9 @@ def dashboard():
         parts_total=parts_total,
         labor_total=labor_total,
         revenue=round(parts_total + labor_total, 2),
+        tower=open_jobs,
+        selected=selected,
+        selected_codes=selected_codes,
+        selected_total=selected_total,
+        next_label=next_status(selected["status"]) if selected else None,
     )
