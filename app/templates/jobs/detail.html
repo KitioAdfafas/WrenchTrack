@@ -15,7 +15,7 @@
                   {% if next_label == "Picked up" %}onsubmit="return confirm('Mark this car as picked up? This cannot be undone.')"{% endif %}>
                 {{ csrf_field() }}
                 <input type="hidden" name="back" value="detail">
-                <button type="submit">Move to {{ next_label }}</button>
+                <button class="primary" type="submit">Move to {{ next_label }}</button>
             </form>
         {% endif %}
     </p>

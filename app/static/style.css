@@ -56,10 +56,14 @@
     --selected: #f6f7f9;
     --muted: #5a6068;
     --hairline: #e3e5e8;
+    --field-border: #8a9099;
 
     /* Red is only for late or stuck jobs */
     --late: #e10600;
     --plate-blue: #1f4fbf;
+
+    /* Messages: errors use carbon, because red means late */
+    --ok: #2e8b3e;
 
     /* One color per status, named after the status */
     --received: #677489;
@@ -137,16 +141,12 @@ main {
     margin-left: auto;
 }
 
-.who button {
-    min-height: 44px;
-    padding: 0 0.9rem;
+.who button,
+.who button:hover {
     border: 0;
     border-radius: var(--radius-chip);
     background: var(--carbon-raised);
     color: var(--on-carbon-bright);
-    font: inherit;
-    font-weight: 600;
-    cursor: pointer;
 }
 
 form {
@@ -166,24 +166,67 @@ select,
 textarea {
     width: 100%;
     box-sizing: border-box;
+    min-height: 44px;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--field-border);
+    border-radius: var(--radius-chip);
+    background: var(--panel);
+    color: var(--carbon);
     font: inherit;
-    padding: 0.4rem;
 }
 
 input[type="radio"] {
     width: auto;
+    min-height: auto;
+}
+
+button {
+    justify-self: start;
+    min-height: 44px;
+    padding: 0 1.1rem;
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-button);
+    background: var(--panel);
+    color: var(--carbon);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+button:hover {
+    background: var(--selected);
+}
+
+button.primary {
+    border-color: var(--carbon);
+    background: var(--carbon);
+    color: var(--on-carbon-bright);
+}
+
+button.primary:hover {
+    background: var(--carbon-raised);
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline: 2px solid var(--carbon);
+    outline-offset: 2px;
 }
 
 .flash {
-    background: #fde8e8;
-    border: 1px solid #e0a0a0;
-    padding: 0.5rem;
     margin: 1rem 0;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--hairline);
+    border-left: 4px solid var(--carbon);
+    border-radius: var(--radius-chip);
+    background: var(--panel);
+    font-weight: 600;
 }
 
 .flash.ok {
-    background: #e6f4ea;
-    border-color: #9fcfae;
+    border-left-color: var(--ok);
 }
 
 table {
