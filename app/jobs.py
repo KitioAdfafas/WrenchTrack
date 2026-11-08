@@ -23,29 +23,13 @@ from flask import (
 
 from .db import get_db
 from .photos import photo_folder, prepare_photo, remove_photo_file, save_photo
+from .status import LAST_STATUS, STATUSES, is_stuck, next_status
 
 bp = Blueprint("jobs", __name__, url_prefix="/jobs")
 
 FUEL_TYPES = ["petrol", "diesel", "hybrid", "electric"]
 
 PHOTO_STAGES = ["before", "after"]
-
-STATUSES = [
-    "Received",
-    "Diagnosing",
-    "Waiting for parts",
-    "Repairing",
-    "Ready",
-    "Picked up",
-]
-
-STUCK_AFTER_DAYS = {
-    "Received": 1,
-    "Diagnosing": 3,
-    "Waiting for parts": 5,
-    "Repairing": 4,
-    "Ready": 2,
-}
 
 def load_car_models():
     """Read app/data/car-list.json into {make: [models]}. Empty if the file is missing."""
@@ -87,13 +71,6 @@ LAST_VISIT_FIELDS = [
     "date_received",
 ]
 
-def next_status(status):
-    """Return the status that follows this one, or None if it is the last."""
-    position = STATUSES.index(status)
-    if position == len(STATUSES) - 1:
-        return None
-    return STATUSES[position + 1]
-
 def default_photo_stage(status):
     """Before until the repair starts, After from then on."""
     if STATUSES.index(status) < STATUSES.index("Repairing"):
@@ -120,28 +97,6 @@ def money(value):
     if not currency:
         return text
     return f"{text} {currency}"
-
-@bp.app_template_global()
-def days_in_status(changed_at):
-    """Whole days since the last status change (stored in UTC)."""
-    try:
-        changed = datetime.strptime(changed_at, "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
-    except (TypeError, ValueError):
-        return 0
-    return max(0, (datetime.now(timezone.utc) - changed).days)
-
-@bp.app_template_global()
-def days_late(job):
-    """Days past the stuck limit, the first late day counts as 1. Zero if not late."""
-    limit = STUCK_AFTER_DAYS.get(job["status"])
-    if limit is None:
-        return 0
-    return max(0, days_in_status(job["status_changed_at"]) - limit + 1)
-
-@bp.app_template_global()
-def is_stuck(job):
-    """True if the job has sat in its current status for too long."""
-    return days_late(job) > 0
 
 def get_job_or_404(job_id):
     job = get_db().execute(
@@ -315,12 +270,12 @@ def index():
         params.append(status)
     elif status == "" and not q:
         conditions.append("status != ?")
-        params.append(STATUSES[-1])
+        params.append(LAST_STATUS)
 
     if conditions:
         sql += " WHERE " + " AND ".join(conditions)
     sql += " ORDER BY (status = ?), date_received, id"
-    params.append(STATUSES[-1])
+    params.append(LAST_STATUS)
 
     jobs = get_db().execute(sql, params).fetchall()
 
@@ -963,7 +918,7 @@ def dashboard():
         "MAX(0, CAST(julianday(date('now')) - julianday(date_received) AS INTEGER)) "
         "AS days_in_shop "
         "FROM jobs WHERE status != ? ORDER BY date_received, id",
-        (STATUSES[-1],),
+        (LAST_STATUS,),
     ).fetchall()
     late_count = len([j for j in open_jobs if is_stuck(j)])
 
@@ -991,7 +946,7 @@ def dashboard():
         "JOIN status_history h ON h.job_id = j.id AND h.to_status = ? AND h.changed_at >= ? "
         "LEFT JOIN parts p ON p.job_id = j.id "
         "GROUP BY j.id",
-        (STATUSES[-1], month_start_utc),
+        (LAST_STATUS, month_start_utc),
     ).fetchall()
     parts_total = round(sum(r["parts_total"] for r in picked), 2)
     labor_total = round(sum(r["labor_cost"] for r in picked), 2)
