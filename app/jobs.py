@@ -586,7 +586,7 @@ def advance(job_id):
     if request.form.get("back") == "detail":
         return redirect(url_for("jobs.detail", job_id=job_id))
     if request.form.get("back") == "dashboard":
-        return redirect(url_for("jobs.dashboard", job=job_id))
+        return redirect(url_for("jobs.dashboard", job=job_id, _anchor="car"))
     return redirect(
         url_for(
             "jobs.index",
@@ -957,13 +957,6 @@ def pick_selected(open_jobs, job_id):
 def dashboard():
     db = get_db()
 
-    counts = {s: 0 for s in STATUSES[:-1]}
-    for row in db.execute(
-        "SELECT status, COUNT(*) AS n FROM jobs WHERE status != ? GROUP BY status",
-        (STATUSES[-1],),
-    ):
-        counts[row["status"]] = row["n"]
-
     open_jobs = db.execute(
         "SELECT id, plate, make, model, year, engine, mileage, customer_name, phone, "
         "status, date_received, status_changed_at, labor_cost, "
@@ -972,9 +965,7 @@ def dashboard():
         "FROM jobs WHERE status != ? ORDER BY date_received, id",
         (STATUSES[-1],),
     ).fetchall()
-    oldest = open_jobs[:5]
-    stuck = [j for j in open_jobs if is_stuck(j)]
-    stuck.sort(key=lambda j: days_in_status(j["status_changed_at"]), reverse=True)
+    late_count = len([j for j in open_jobs if is_stuck(j)])
 
     selected = pick_selected(open_jobs, request.args.get("job", type=int))
     selected_codes = []
@@ -1007,10 +998,9 @@ def dashboard():
 
     return render_template(
         "jobs/dashboard.html",
-        statuses=STATUSES[:-1],
-        counts=counts,
-        stuck=stuck,
-        oldest=oldest,
+        statuses=STATUSES,
+        late_count=late_count,
+        month_name=month_start.strftime("%B"),
         picked_count=len(picked),
         parts_total=parts_total,
         labor_total=labor_total,
