@@ -49,7 +49,7 @@
          {% endif %}
       </td>
       <td>{{ job["date_received"] }}</td>
-      <td>{% if is_open(job["status"]) %}{{ job["days_in_shop"] }}{% else %}-{% endif %}</td>
+      <td>{% if is_open(job["status"]) %}{{ days_in_shop(job["date_received"]) }}{% else %}-{% endif %}</td>
       <td>
         {% set following = next_status(job["status"]) %}
         {% if following %}

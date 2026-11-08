@@ -1,5 +1,7 @@
 from datetime import datetime, timezone
 
+from .shop import parse_utc
+
 STUCK_AFTER_DAYS = {
     "Received": 1,
     "Diagnosing": 3,
@@ -30,9 +32,8 @@ def status_class(status):
 
 def days_in_status(changed_at):
     """Whole days since the last status change (stored in UTC)."""
-    try:
-        changed = datetime.strptime(changed_at, "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
-    except (TypeError, ValueError):
+    changed = parse_utc(changed_at)
+    if changed is None:
         return 0
     return max(0, (datetime.now(timezone.utc) - changed).days)
 

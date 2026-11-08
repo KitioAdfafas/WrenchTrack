@@ -1,10 +1,10 @@
 import os
 
-from flask import Flask, redirect, url_for
+from flask import Flask, redirect, render_template, url_for
 from flask_wtf.csrf import CSRFProtect, generate_csrf
 from markupsafe import Markup
 
-from . import auth, db, jobs, status
+from . import auth, db, jobs, shop, status
 
 csrf = CSRFProtect()
 
@@ -38,6 +38,7 @@ def create_app():
 
     db.init_app(app)
     auth.init_app(app)
+    shop.init_app(app)
     status.init_app(app)
     app.register_blueprint(jobs.bp)
 
@@ -48,5 +49,13 @@ def create_app():
     @app.route("/health")
     def health():
         return "WrenchTrack is running"
+
+    @app.errorhandler(404)
+    def page_not_found(error):
+        return render_template("404.html"), 404
+
+    @app.errorhandler(500)
+    def server_error(error):
+        return render_template("500.html"), 500
 
     return app

@@ -68,7 +68,8 @@
                 </div>
                 <div>
                     <dt>In the shop</dt>
-                    <dd>{{ selected["days_in_shop"] }} day{{ "" if selected["days_in_shop"] == 1 else "s" }}</dd>
+                    {% set days = days_in_shop(selected["date_received"]) %}
+                    <dd>{{ days }} day{{ "" if days == 1 else "s" }}</dd>
                 </div>
                 <div>
                     <dt>Parts and labor so far</dt>

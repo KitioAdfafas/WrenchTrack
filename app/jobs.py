@@ -3,15 +3,13 @@ import difflib
 import io
 import json
 import sqlite3
-from datetime import date, datetime, timezone
+from datetime import date
 from pathlib import Path
-from zoneinfo import ZoneInfo
 
 from flask import (
     Blueprint,
     Response,
     abort,
-    current_app,
     flash,
     g,
     redirect,
@@ -23,6 +21,7 @@ from flask import (
 
 from .db import get_db
 from .photos import photo_folder, prepare_photo, remove_photo_file, save_photo
+from .shop import localtime, money, shop_now, shop_today, utc_text
 from .status import LAST_STATUS, STATUSES, is_stuck, next_status
 
 bp = Blueprint("jobs", __name__, url_prefix="/jobs")
@@ -76,27 +75,6 @@ def default_photo_stage(status):
     if STATUSES.index(status) < STATUSES.index("Repairing"):
         return "before"
     return "after"
-
-@bp.app_template_filter("localtime")
-def localtime(value):
-    """Turn a UTC timestamp from SQLite into shop time, like 2026-10-24 15:00."""
-    if not value:
-        return ""
-    try:
-        utc = datetime.strptime(value, "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
-    except ValueError:
-        return value
-    zone = ZoneInfo(current_app.config["SHOP_TIMEZONE"])
-    return utc.astimezone(zone).strftime("%Y-%m-%d %H:%M")
-
-@bp.app_template_filter("money")
-def money(value):
-    """Format an amount with two decimals and the shop currency."""
-    text = f"{value or 0:.2f}"
-    currency = current_app.config["CURRENCY"].strip()
-    if not currency:
-        return text
-    return f"{text} {currency}"
 
 def get_job_or_404(job_id):
     job = get_db().execute(
@@ -257,9 +235,7 @@ def index():
         "SELECT id, plate, make, model, customer_name, status, date_received, "
         "status_changed_at, phone, vin, "
         "(SELECT GROUP_CONCAT(code, ' ') FROM fault_codes "
-        "WHERE fault_codes.job_id = jobs.id) AS codes, "
-        "MAX(0, CAST(julianday(date('now')) - julianday(date_received) AS INTEGER)) "
-        "AS days_in_shop "
+        "WHERE fault_codes.job_id = jobs.id) AS codes "
         "FROM jobs"
     )
     conditions = []
@@ -390,7 +366,7 @@ def new():
     else:
         form = {
             "fuel_type": "petrol",
-            "date_received": date.today().isoformat(),
+            "date_received": shop_today().isoformat(),
         }
 
     return render_template("jobs/new.html", form=form, fuel_types=FUEL_TYPES, car_models=CAR_MODELS)
@@ -697,14 +673,6 @@ def upload_too_large(error):
         return redirect(url_for("jobs.index"))
     return redirect(url_for("jobs.detail", job_id=job_id))
 
-@bp.app_errorhandler(404)
-def page_not_found(error):
-    return render_template("404.html"), 404
-
-@bp.app_errorhandler(500)
-def server_error(error):
-    return render_template("500.html"), 500
-
 @bp.route("/<int:job_id>/photos/<int:photo_id>")
 def photo_file(job_id, photo_id):
     photo = get_db().execute(
@@ -855,7 +823,7 @@ def export_csv():
     sql += " GROUP BY j.id ORDER BY j.date_received, j.id"
     rows = get_db().execute(sql, params).fetchall()
 
-    def money(value):
+    def csv_money(value):
         text = f"{value:.2f}"
         return text.replace(".", ",") if delimiter == ";" else text
 
@@ -885,9 +853,9 @@ def export_csv():
             csv_safe(row["problem"]),
             row["status"],
             localtime(row["status_changed_at"]),
-            money(parts_total),
-            money(row["labor_cost"]),
-            money(total),
+            csv_money(parts_total),
+            csv_money(row["labor_cost"]),
+            csv_money(total),
         ])
 
     filename = f"wrenchtrack_jobs_{date.today().isoformat()}.csv"
@@ -912,9 +880,7 @@ def dashboard():
 
     open_jobs = db.execute(
         "SELECT id, plate, make, model, year, engine, mileage, customer_name, phone, "
-        "status, date_received, status_changed_at, labor_cost, "
-        "MAX(0, CAST(julianday(date('now')) - julianday(date_received) AS INTEGER)) "
-        "AS days_in_shop "
+        "status, date_received, status_changed_at, labor_cost "
         "FROM jobs WHERE status != ? ORDER BY date_received, id",
         (LAST_STATUS,),
     ).fetchall()
@@ -934,9 +900,8 @@ def dashboard():
         ).fetchall()
         _, selected_total = calculate_totals(selected, parts)
 
-    zone = ZoneInfo(current_app.config["SHOP_TIMEZONE"])
-    month_start = datetime.now(zone).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    month_start_utc = month_start.astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+    month_start = shop_now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    month_start_utc = utc_text(month_start)
 
     picked = db.execute(
         "SELECT j.id, j.labor_cost, COALESCE(SUM(p.quantity * p.price), 0) AS parts_total "
