@@ -45,18 +45,26 @@ def load_car_models():
 
 CAR_MODELS = load_car_models()
 
-REQUIRED_FIELDS = [
+JOB_FIELDS = [
     "customer_name",
     "phone",
     "make",
     "model",
     "year",
     "plate",
+    "vin",
     "mileage",
+    "engine",
     "fuel_type",
     "problem",
     "date_received",
 ]
+
+OPTIONAL_FIELDS = ["vin", "engine"]
+
+NUMBER_FIELDS = ["year", "mileage"]
+
+UPPERCASE_FIELDS = ["plate", "vin"]
 
 LAST_VISIT_FIELDS = [
     "customer_name",
@@ -119,23 +127,15 @@ def ready_message(job, total):
 
 def read_job_form(form):
     """Clean the submitted form. Returns (values, error). error is None if valid."""
-    values = {
-        "customer_name": form.get("customer_name", "").strip(),
-        "phone": form.get("phone", "").strip(),
-        "make": form.get("make", "").strip(),
-        "model": form.get("model", "").strip(),
-        "year": form.get("year", "").strip(),
-        "plate": form.get("plate", "").strip().upper(),
-        "vin": form.get("vin", "").strip().upper(),
-        "mileage": form.get("mileage", "").strip(),
-        "engine": form.get("engine", "").strip(),
-        "fuel_type": form.get("fuel_type", "").strip(),
-        "problem": form.get("problem", "").strip(),
-        "date_received": form.get("date_received", "").strip(),
-    }
+    values = {}
+    for field in JOB_FIELDS:
+        text = form.get(field, "").strip()
+        if field in UPPERCASE_FIELDS:
+            text = text.upper()
+        values[field] = text
 
-    for field in REQUIRED_FIELDS:
-        if not values[field]:
+    for field in JOB_FIELDS:
+        if field not in OPTIONAL_FIELDS and not values[field]:
             return values, "Please fill in every required field."
 
     if values["fuel_type"] not in FUEL_TYPES:
@@ -158,6 +158,18 @@ def read_job_form(form):
         return values, "Date must look like 2026-10-10."
 
     return values, None
+
+def job_params(values):
+    """Turn checked form values into database values: whole numbers, and NULL for empty optional fields."""
+    params = {}
+    for field in JOB_FIELDS:
+        value = values[field]
+        if field in NUMBER_FIELDS:
+            value = int(value)
+        elif field in OPTIONAL_FIELDS and not value:
+            value = None
+        params[field] = value
+    return params
 
 ALIAS_GROUPS = [
     {"vw", "volkswagen"},
@@ -350,25 +362,14 @@ def new():
 
         if error is None:
             db = get_db()
+            params = job_params(values)
+            params["created_by"] = g.user["id"]
             cursor = db.execute(
                 "INSERT INTO jobs (customer_name, phone, make, model, year, plate, "
                 "vin, mileage, engine, fuel_type, problem, date_received, created_by) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                (
-                    values["customer_name"],
-                    values["phone"],
-                    values["make"],
-                    values["model"],
-                    int(values["year"]),
-                    values["plate"],
-                    values["vin"] or None,
-                    int(values["mileage"]),
-                    values["engine"] or None,
-                    values["fuel_type"],
-                    values["problem"],
-                    values["date_received"],
-                    g.user["id"],
-                ),
+                "VALUES (:customer_name, :phone, :make, :model, :year, :plate, "
+                ":vin, :mileage, :engine, :fuel_type, :problem, :date_received, :created_by)",
+                params,
             )
             job_id = cursor.lastrowid
             db.execute(
@@ -463,26 +464,16 @@ def edit(job_id):
 
         if error is None:
             db = get_db()
+            params = job_params(values)
+            params["id"] = job_id
             db.execute(
-                "UPDATE jobs SET customer_name = ?, phone = ?, make = ?, model = ?, "
-                "year = ?, plate = ?, vin = ?, mileage = ?, engine = ?, "
-                "fuel_type = ?, problem = ?, date_received = ? "
-                "WHERE id = ?",
-                (
-                    values["customer_name"],
-                    values["phone"],
-                    values["make"],
-                    values["model"],
-                    int(values["year"]),
-                    values["plate"],
-                    values["vin"] or None,
-                    int(values["mileage"]),
-                    values["engine"] or None,
-                    values["fuel_type"],
-                    values["problem"],
-                    values["date_received"],
-                    job_id,
-                ),
+                "UPDATE jobs SET customer_name = :customer_name, phone = :phone, "
+                "make = :make, model = :model, year = :year, plate = :plate, "
+                "vin = :vin, mileage = :mileage, engine = :engine, "
+                "fuel_type = :fuel_type, problem = :problem, "
+                "date_received = :date_received "
+                "WHERE id = :id",
+                params,
             )
             db.commit()
             flash("Job updated.", "ok")
