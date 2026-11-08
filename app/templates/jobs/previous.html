@@ -18,7 +18,7 @@
             <td>{{ r["plate"] }}</td>
             <td>{{ r["make"] }} {{ r["model"] }}</td>
             <td>{{ r["customer_name"] }}</td>
-            <td><span class="status status-{{ r['status']|lower|replace(' ','-')}}">{{ r["status"]}}</span></td>
+            <td><span class="status status-{{ r['status']|status_class}}">{{ r["status"]}}</span></td>
             <td>{{ r["problem"]|truncate(60) }}</td>
             <td>{{ r["reason"] }}</td>
         </tr>

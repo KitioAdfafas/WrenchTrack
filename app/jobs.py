@@ -286,7 +286,6 @@ def index():
     return render_template(
         "jobs/index.html",
         jobs=jobs,
-        next_status=next_status,
         q=q,
         status=status,
         statuses=STATUSES,
@@ -462,7 +461,6 @@ def detail(job_id):
         history=history,
         parts_total=parts_total,
         total=total,
-        next_label=next_status(job["status"]),
         related_count=related_count,
         ready_text=ready_text,
         photo_stage=default_photo_stage(job["status"]),
@@ -964,5 +962,4 @@ def dashboard():
         selected=selected,
         selected_codes=selected_codes,
         selected_total=selected_total,
-        next_label=next_status(selected["status"]) if selected else None,
     )

@@ -19,7 +19,7 @@
         <a class="tower-row" href="{{ url_for('jobs.dashboard', job=job['id'], _anchor='car') }}"
             {% if selected and job["id"] == selected["id"] %}aria-current="true"{% endif %}>
             <span class="pos"><span>{{ loop.index }}</span></span>
-            <span class="stripe" style="background: var(--{{ job['status']|lower|replace(' ', '-') }})"></span>
+            <span class="stripe" style="background: var(--{{ job['status']|status_class }})"></span>
             <span class="plate"><span>{{ job["plate"] }}</span></span>
             <span class="car">
                 {{ job["make"] }} {{ job["model"] }}
@@ -40,6 +40,7 @@
         {% if selected %}
         {% set late = days_late(selected) %}
         {% set current = statuses.index(selected["status"]) %}
+        {% set following = next_status(selected["status"]) %}
         <section class="panel onboard" id="car">
             <div class="onboard-head">
                 <h2><span class="plate big"><span>{{ selected["plate"] }}</span></span></h2>
@@ -77,7 +78,7 @@
 
             <ol class="sectors">
                 {% for s in statuses %}
-                <li style="--sector: var(--{{ s|lower|replace(' ', '-') }})"
+                <li style="--sector: var(--{{ s|status_class }})"
                     {% if loop.index0 <= current %}class="done"{% endif %}
                     {% if loop.index0 == current %}aria-current="step"{% endif %}><span>{{ s }}</span></li>
                 {% endfor %}
@@ -93,10 +94,10 @@
 
             <div class="actions">
                 <form class="inline-form" method="post" action="{{ url_for('jobs.advance', job_id=selected['id']) }}"
-                    {% if next_label == "Picked up" %}onsubmit="return confirm('Mark this car as picked up? This cannot be undone.')"{% endif %}>
+                    {% if following == "Picked up" %}onsubmit="return confirm('Mark this car as picked up? This cannot be undone.')"{% endif %}>
                     {{ csrf_field() }}
                     <input type="hidden" name="back" value="dashboard">
-                    <button class="primary" type="submit">Move to {{ next_label }}</button>
+                    <button class="primary" type="submit">Move to {{ following }}</button>
                 </form>
                 <a class="button" href="{{ url_for('jobs.detail', job_id=selected['id']) }}">Open job</a>
                 <a class="button" href="{{ url_for('jobs.print_ticket', job_id=selected['id']) }}">Print ticket</a>
