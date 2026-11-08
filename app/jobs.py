@@ -84,11 +84,31 @@ def get_job_or_404(job_id):
         abort(404)
     return job
 
+PARTS_TOTAL_SQL = "COALESCE(SUM(p.quantity * p.price), 0) AS parts_total"
+
+def job_parts(job_id):
+    """All parts on a job, oldest first."""
+    return get_db().execute(
+        "SELECT id, name, quantity, price FROM parts WHERE job_id = ? ORDER BY id",
+        (job_id,),
+    ).fetchall()
+
+def job_fault_codes(job_id):
+    """All fault codes on a job, oldest first."""
+    return get_db().execute(
+        "SELECT id, code, description, created_at FROM fault_codes "
+        "WHERE job_id = ? ORDER BY id",
+        (job_id,),
+    ).fetchall()
+
+def job_total(parts_total, labor_cost):
+    """The one total rule: parts plus labor, rounded to cents."""
+    return round(parts_total + labor_cost, 2)
+
 def calculate_totals(job, parts):
     """Return (parts_total, total), calculated from the stored rows."""
     parts_total = round(sum(p["quantity"] * p["price"] for p in parts), 2)
-    total = round(parts_total + job["labor_cost"], 2)
-    return parts_total, total
+    return parts_total, job_total(parts_total, job["labor_cost"])
 
 def ready_message(job, total):
     """Build the pickup message for the customer."""
@@ -396,17 +416,8 @@ def detail(job_id):
         (job_id,),
     ).fetchall()
 
-    parts = get_db().execute(
-        "SELECT id, name, quantity, price FROM parts WHERE job_id = ? ORDER BY id",
-        (job_id,),
-    ).fetchall()
-
-    fault_codes = get_db().execute(
-        "SELECT id, code, description, created_at FROM fault_codes "
-        "WHERE job_id = ? ORDER BY id",
-        (job_id,),
-    ).fetchall()
-
+    parts = job_parts(job_id)
+    fault_codes = job_fault_codes(job_id)
     parts_total, total = calculate_totals(job, parts)
 
     history = get_db().execute(
@@ -750,15 +761,8 @@ def set_labor(job_id):
 @bp.route("/<int:job_id>/print")
 def print_ticket(job_id):
     job = get_job_or_404(job_id)
-    db = get_db()
-    fault_codes = db.execute(
-        "SELECT code, description FROM fault_codes WHERE job_id = ? ORDER BY id",
-        (job_id,),
-    ).fetchall()
-    parts = db.execute(
-        "SELECT name, quantity, price FROM parts WHERE job_id = ? ORDER BY id",
-        (job_id,),
-    ).fetchall()
+    fault_codes = job_fault_codes(job_id)
+    parts = job_parts(job_id)
     parts_total, total = calculate_totals(job, parts)
 
     return render_template(
@@ -815,7 +819,7 @@ def export_csv():
         params.append(end.isoformat())
 
     sql = (
-        "SELECT j.*, COALESCE(SUM(p.quantity * p.price), 0) AS parts_total "
+        "SELECT j.*, " + PARTS_TOTAL_SQL + " "
         "FROM jobs j LEFT JOIN parts p ON p.job_id = j.id"
     )
     if conditions:
@@ -836,7 +840,7 @@ def export_csv():
     ])
     for row in rows:
         parts_total = round(row["parts_total"], 2)
-        total = round(parts_total + row["labor_cost"], 2)
+        total = job_total(parts_total, row["labor_cost"])
         writer.writerow([
             row["id"],
             row["date_received"],
@@ -890,21 +894,14 @@ def dashboard():
     selected_codes = []
     selected_total = 0
     if selected is not None:
-        selected_codes = db.execute(
-            "SELECT code, description FROM fault_codes WHERE job_id = ? ORDER BY id",
-            (selected["id"],),
-        ).fetchall()
-        parts = db.execute(
-            "SELECT quantity, price FROM parts WHERE job_id = ?",
-            (selected["id"],),
-        ).fetchall()
-        _, selected_total = calculate_totals(selected, parts)
+        selected_codes = job_fault_codes(selected["id"])
+        _, selected_total = calculate_totals(selected, job_parts(selected["id"]))
 
     month_start = shop_now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     month_start_utc = utc_text(month_start)
 
     picked = db.execute(
-        "SELECT j.id, j.labor_cost, COALESCE(SUM(p.quantity * p.price), 0) AS parts_total "
+        "SELECT j.id, j.labor_cost, " + PARTS_TOTAL_SQL + " "
         "FROM jobs j "
         "JOIN status_history h ON h.job_id = j.id AND h.to_status = ? AND h.changed_at >= ? "
         "LEFT JOIN parts p ON p.job_id = j.id "
@@ -922,7 +919,7 @@ def dashboard():
         picked_count=len(picked),
         parts_total=parts_total,
         labor_total=labor_total,
-        revenue=round(parts_total + labor_total, 2),
+        revenue=job_total(parts_total, labor_total),
         tower=open_jobs,
         selected=selected,
         selected_codes=selected_codes,
