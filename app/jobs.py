@@ -356,6 +356,17 @@ def save_job_photos(db, job, photos, stage):
             remove_photo_file(filename)
         raise
 
+def render_job_form(form, editing=False, related=None):
+    """Show the job form, for a new job or for editing one."""
+    return render_template(
+        "jobs/new.html",
+        form=form,
+        fuel_types=FUEL_TYPES,
+        car_models=CAR_MODELS,
+        editing=editing,
+        related=related,
+    )
+
 @bp.route("/new", methods=("GET", "POST"))
 def new():
     if request.method == "POST":
@@ -365,13 +376,7 @@ def new():
             related = find_related_jobs(values["plate"], values["vin"])
             if related:
                 ask_for_photos_again()
-                return render_template(
-                    "jobs/new.html",
-                    form=values,
-                    fuel_types=FUEL_TYPES,
-                    car_models=CAR_MODELS,
-                    related=related,
-                )
+                return render_job_form(values, related=related)
 
         if error is None:
             photos, error = read_photos()
@@ -404,7 +409,7 @@ def new():
             "date_received": shop_today().isoformat(),
         }
 
-    return render_template("jobs/new.html", form=form, fuel_types=FUEL_TYPES, car_models=CAR_MODELS)
+    return render_job_form(form)
 
 @bp.route("/same-car")
 def same_car():
@@ -498,14 +503,7 @@ def edit(job_id):
     else:
         form = {key: ("" if value is None else value) for key, value in dict(job).items()}
 
-    return render_template(
-        "jobs/new.html",
-        form=form,
-        fuel_types=FUEL_TYPES,
-        car_models=CAR_MODELS,
-        heading="Edit job",
-        button="Save changes",
-    )
+    return render_job_form(form, editing=True)
 
 @bp.route("/<int:job_id>/advance", methods=("POST",))
 def advance(job_id):

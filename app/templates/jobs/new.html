@@ -1,15 +1,15 @@
 {% extends "base.html" %}
 
-{% block title %}{{ heading|default("Add job") }}{% endblock %}
+{% block title %}{{ "Edit job" if editing else "Add job" }}{% endblock %}
 
 {% block content %}
-<h1>{{ heading|default("Add job") }}</h1>
+<h1>{{ "Edit job" if editing else "Add job" }}</h1>
 <form method="post" id="job-form" enctype="multipart/form-data">
     {{ csrf_field() }}
 
     <label for="plate">Plate</label>
     <input name="plate" id="plate" value="{{ form['plate']}}" required autofocus autocomplete="off">
-    {% if heading is not defined %}
+    {% if not editing %}
     <small id="plate-note" data-url="{{ url_for('jobs.last_visit') }}"></small>
     {% endif %}
 
@@ -54,15 +54,15 @@
     <label for="problem">Problem described by the customer</label>
     <textarea name="problem" id="problem" rows="4" required>{{ form['problem'] }}</textarea>
 
-    {% if heading is not defined %}
+    {% if not editing %}
     <label for="photos">Photos (optional)</label>
     <input type="file" name="photos" id="photos" accept=".jpg,.jpeg,.png,.heic,.heif,image/*" multiple>
     <div id="photo-boxes"></div>
     {% endif %}
 
-    <button class="primary" type="submit">{{ button|default("Save job") }}</button>
+    <button class="primary" type="submit">{{ "Save changes" if editing else "Save job" }}</button>
 
-    {% if heading is not defined %}
+    {% if not editing %}
     <dialog id="dup-dialog">
         {% if related %}{% include "jobs/_same_car.html" %}{% endif %}
     </dialog>
@@ -93,7 +93,7 @@
     makeInput.addEventListener("input", fillModels);
     fillModels();
 </script>
-{% if heading is not defined %}
+{% if not editing %}
 <script src="{{ url_for('static', filename='photo_boxes.js') }}"></script>
 <script src="{{ url_for('static', filename='plate_autofill.js') }}"></script>
 <script>
