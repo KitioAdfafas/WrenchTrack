@@ -50,19 +50,7 @@
       </td>
       <td>{{ job["date_received"] }}</td>
       <td>{% if is_open(job["status"]) %}{{ days_in_shop(job["date_received"]) }}{% else %}-{% endif %}</td>
-      <td>
-        {% set following = next_status(job["status"]) %}
-        {% if following %}
-          <form class="inline-form" method="post" action="{{ url_for('jobs.advance', job_id=job['id']) }}"
-                {% if following == "Picked up" %}onsubmit="return confirm('Mark this car as picked up? This cannot be undone.')"{% endif %}>
-            {{ csrf_field() }}
-            <input type="hidden" name="back" value="list">
-            <input type="hidden" name="q" value="{{ q }}">
-            <input type="hidden" name="status" value="{{ status }}">
-            <button type="submit">Move to {{ following }}</button>
-          </form>
-        {% endif %}
-      </td>
+      <td>{% include "jobs/_move_form.html" %}</td>
     </tr>
     {% endfor %}
   </tbody>

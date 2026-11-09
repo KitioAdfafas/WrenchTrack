@@ -118,6 +118,22 @@ def calculate_totals(job, parts):
     parts_total = round(sum(p["quantity"] * p["price"] for p in parts), 2)
     return parts_total, job_total(parts_total, job["labor_cost"])
 
+def record_status(db, job_id, from_status, to_status):
+    """Write one line of status history, signed by the user."""
+    db.execute(
+        "INSERT INTO status_history (job_id, from_status, to_status, changed_by) "
+        "VALUES (?, ?, ?, ?)",
+        (job_id, from_status, to_status, g.user["id"]),
+    )
+
+def is_local_path(target):
+    """True only for an address on this site."""
+    return (
+        target.startswith("/")
+        and not target.startswith("//")
+        and "\\" not in target
+    )
+
 def ready_message(job, total):
     """Build the pickup message for the customer."""
     return (
@@ -363,20 +379,18 @@ def new():
         if error is None:
             db = get_db()
             params = job_params(values)
+            params["status"] = STATUSES[0]
             params["created_by"] = g.user["id"]
             cursor = db.execute(
                 "INSERT INTO jobs (customer_name, phone, make, model, year, plate, "
-                "vin, mileage, engine, fuel_type, problem, date_received, created_by) "
+                "vin, mileage, engine, fuel_type, problem, date_received, status, created_by) "
                 "VALUES (:customer_name, :phone, :make, :model, :year, :plate, "
-                ":vin, :mileage, :engine, :fuel_type, :problem, :date_received, :created_by)",
+                ":vin, :mileage, :engine, :fuel_type, :problem, :date_received, "
+                ":status, :created_by)",
                 params,
             )
             job_id = cursor.lastrowid
-            db.execute(
-                "INSERT INTO status_history (job_id, from_status, to_status, changed_by) "
-                "VALUES (?, NULL, ?, ?)",
-                (job_id, STATUSES[0], g.user["id"]),
-            )
+            record_status(db, job_id, None, STATUSES[0])
             save_job_photos(db, get_job_or_404(job_id), photos, "before")
             flash("Job saved.", "ok")
             return redirect(url_for("jobs.detail", job_id=job_id))
@@ -507,24 +521,13 @@ def advance(job_id):
             "WHERE id = ?",
             (following, job_id),
         )
-        db.execute(
-            "INSERT INTO status_history (job_id, from_status, to_status, changed_by) "
-            "VALUES (?, ?, ?, ?)",
-            (job_id, job["status"], following, g.user["id"]),
-        )
+        record_status(db, job_id, job["status"], following)
         db.commit()
 
-    if request.form.get("back") == "detail":
-        return redirect(url_for("jobs.detail", job_id=job_id))
-    if request.form.get("back") == "dashboard":
-        return redirect(url_for("jobs.dashboard", job=job_id, _anchor="car"))
-    return redirect(
-        url_for(
-            "jobs.index",
-            q=request.form.get("q") or None,
-            status=request.form.get("status") or None,
-        )
-    )
+    target = request.form.get("next", "")
+    if is_local_path(target):
+        return redirect(target)
+    return redirect(url_for("jobs.index"))
 
 @bp.route("/<int:job_id>/notes", methods=("POST",))
 def add_note(job_id):

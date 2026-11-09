@@ -9,16 +9,8 @@
     <p>
         <span class="status status-{{ job['status']|status_class }}">{{ job["status"]}}</span>
         {% set d = days_in_status(job["status_changed_at"]) %}
-        {% set following = next_status(job["status"]) %}
         <small class="{% if is_stuck(job) %}stuck{% endif %}">since {{ job["status_changed_at"]|localtime }} {% if is_open(job["status"]) %}({{ d }} day{{ "" if d == 1 else "s" }}){% endif %}</small>
-        {% if following %}
-            <form class="inline-form" method="post" action="{{ url_for('jobs.advance', job_id=job['id']) }}"
-                  {% if following == "Picked up" %}onsubmit="return confirm('Mark this car as picked up? This cannot be undone.')"{% endif %}>
-                {{ csrf_field() }}
-                <input type="hidden" name="back" value="detail">
-                <button class="primary" type="submit">Move to {{ following }}</button>
-            </form>
-        {% endif %}
+        {% with primary=true %}{% include "jobs/_move_form.html" %}{% endwith %}
     </p>
 
     {% if ready_text %}

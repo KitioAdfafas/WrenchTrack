@@ -40,7 +40,6 @@
         {% if selected %}
         {% set late = days_late(selected) %}
         {% set current = statuses.index(selected["status"]) %}
-        {% set following = next_status(selected["status"]) %}
         <section class="panel onboard" id="car">
             <div class="onboard-head">
                 <h2><span class="plate big"><span>{{ selected["plate"] }}</span></span></h2>
@@ -94,12 +93,9 @@
             {% endif %}
 
             <div class="actions">
-                <form class="inline-form" method="post" action="{{ url_for('jobs.advance', job_id=selected['id']) }}"
-                    {% if following == "Picked up" %}onsubmit="return confirm('Mark this car as picked up? This cannot be undone.')"{% endif %}>
-                    {{ csrf_field() }}
-                    <input type="hidden" name="back" value="dashboard">
-                    <button class="primary" type="submit">Move to {{ following }}</button>
-                </form>
+                {% with job=selected, move_next=url_for('jobs.dashboard', job=selected['id'], _anchor='car'), primary=true %}
+                {% include "jobs/_move_form.html" %}
+                {% endwith %}
                 <a class="button" href="{{ url_for('jobs.detail', job_id=selected['id']) }}">Open job</a>
                 <a class="button" href="{{ url_for('jobs.print_ticket', job_id=selected['id']) }}">Print ticket</a>
             </div>

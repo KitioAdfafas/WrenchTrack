@@ -1,0 +1,10 @@
+{# Move button. Needs job. Optional: move_next (where to go after), primary (big button). #}
+{% set following = next_status(job["status"]) %}
+{% if following %}
+<form class="inline-form" method="post" action="{{ url_for('jobs.advance', job_id=job['id']) }}"
+    {% if not is_open(following) %}onsubmit="return confirm('Mark this car as picked up? This cannot be undone.')"{% endif %}>
+    {{ csrf_field() }}
+    <input type="hidden" name="next" value="{{ move_next|default(request.full_path) }}">
+    <button {% if primary %}class="primary" {% endif %}type="submit">Move to {{ following }}</button>
+</form>
+{% endif %}
