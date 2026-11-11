@@ -1,60 +1,72 @@
 {% extends "base.html" %} {% block title %}Jobs{% endblock %} {% block content %}
-<h1>Jobs</h1>
-<p><a href="{{ url_for('jobs.new') }}">Add job</a> | <a href="{{ url_for('jobs.export') }}">Export CSV</a></p>
+<div class="page-head">
+  <h1>Jobs</h1>
+  <p>
+    <a class="button" href="{{ url_for('jobs.new')}}">Add job</a>
+    <a class="button" href="{{ url_for('jobs.export')}}">Export CSV</a>
+  </p>
+</div>
 
-<form method="get" action="{{ url_for('jobs.index') }}">
-  <label for="q">Search plate, customer, car, phone, VIN or fault code</label>
-  <input name="q" id="q" value="{{ q }}">
+<form class="panel and search" method="get" action="{{ url_for('jobs.index') }}">
+  <div class="field">
+    <label for="q">Search plate, customer, car, phone, VIN or fault code</label>
+    <input name="q" id="q" value="{{ q }}">
+  </div>
 
-  <label for="status">Status</label>
-  <select name="status" id="status">
-    <option value="" {% if not status %}selected{% endif %}>Active jobs</option>
-    <option value="all" {% if status == "all" %}selected{% endif %}>All jobs</option>
-    {% for s in statuses %}
-    <option value="{{ s }}" {% if status == s %}selected{% endif %}>{{ s }}</option>
-    {% endfor %}
-  </select>
+  <div class="field">
+    <label for="status">Status</label>
+    <select name="status" id="status">
+      <option value="" {% if not status %}selected{% endif %}>Active jobs</option>
+      <option value="all" {% if status == "all" %}selected{% endif %}>All jobs</option>
+      {% for s in statuses %}
+      <option value="{{ s }}" {% if status == s %}selected{% endif %}>{{ s }}</option>
+      {% endfor %}
+    </select>
+  </div>
 
-  <button type="submit">Search</button>
-  <a href="{{ url_for('jobs.index') }}">Clear</a>
+  <div class="search-actions">
+    <button class="primary" type="submit">Search</button>
+    <a class="button" href="{{ url_for('jobs.index') }}">Clear</a>
+  </div>
+
+  {% if not q and not status %}<p class="search-hint"><small>Picked up jobs are hidden. Search, or choose "All jobs" to see them.</small></p>{% endif %}
 </form>
 
-{% if not q and not status %}<p><small>Picked up jobs are hidden. Search, or choose "All jobs" to see them.</small></p>{% endif %}
-
 {% if jobs %}
-<table>
-  <thead>
-    <tr>
-      <th>Plate</th>
-      <th>Car</th>
-      <th>Customer</th>
-      <th>Status</th>
-      <th>Last change</th>
-      <th>Received</th>
-      <th>Days</th>
-      <th>Next step</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for job in jobs %}
-    <tr>
-      <td><a href="{{ url_for('jobs.detail', job_id=job['id']) }}">{{ job["plate"] }}</a></td>
-      <td>{{ job["make"] }} {{ job["model"] }}</td>
-      <td>{{ job["customer_name"] }}</td>
-      <td><span class="status status-{{ job['status']|status_class }}">{{ job["status"] }}</span></td>
-      <td>{{ job["status_changed_at"]|localtime }}
-        {% if is_open(job["status"]) %}
-          {% set d = days_in_status(job["status_changed_at"]) %}
-          <br><small class="{% if is_stuck(job) %}stuck{% endif %}">{{ d }} day{{ "" if d == 1 else "s" }} in this status</small>
-         {% endif %}
-      </td>
-      <td>{{ job["date_received"] }}</td>
-      <td>{% if is_open(job["status"]) %}{{ days_in_shop(job["date_received"]) }}{% else %}-{% endif %}</td>
-      <td>{% include "jobs/_move_form.html" %}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+<div class="panel">
+  <table class="job-table">
+    <thead>
+      <tr>
+        <th>Plate</th>
+        <th>Car and customer</th>
+        <th>Status</th>
+        <th>Received</th>
+        <th>Days</th>
+        <th>Next step</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for job in jobs %}
+      <tr>
+        <td class="c-plate"><a class="plate" href="{{ url_for('jobs.detail', job_id=job['id']) }}"><span>{{ job["plate"] }}</span></a></td>
+        <td class="c-car">{{ job["make"] }}{{ job["model"] }}
+          <small>{{ job["customer_name"] }}</small>
+        </td>
+        <td class="c-status"><span class="status status-{{ job['status']|status_class }}">{{ job["status"] }}</span>
+          <small>{{ job["status_changed_at"]|localtime }}</small>
+          {% if is_open(job["status"]) %}
+            {% set d = days_in_status(job["status_changed_at"]) %}  
+            <small class="{% if is_stuck(job) %}stuck{% endif %}">{{ d }} day{{ "" if d == 1 else "s" }} in this status</small>
+          {% endif %}  
+        </td>
+        <td class="c-received">{{ job["date_received"] }}</td>
+        <td class="c-days">{% if is_open(job["status"]) %}{{ days_in_shop(job["date_received"]) }}{% else %}-{% endif %}</td>
+        <td class="c-move">{% include "jobs/_move_form.html" %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
 {% else %}
 <p>{% if q or status %}No jobs match your search.{% else %}No active jobs.{% endif %}</p>
 {% endif %} {% endblock %}
