@@ -1,9 +1,6 @@
 const plateInput = document.getElementById("plate");
 const plateNote = document.getElementById("plate-note");
 const defaultFuel = document.getElementById("fuel_type").value;
-const autofillFields = [
-    "customer_name", "phone", "make", "model", "year", "vin", "engine", "fuel_type",
-];
 let autofilled = {};
 
 function blankValue(id) {
@@ -16,9 +13,11 @@ function canFill(field) {
 
 function fillFields(visit) {
     const filled = {};
-    for (const id of autofillFields) {
+    const ids = new Set([...Object.keys(visit), ...Object.keys(autofilled)]);
+    ids.delete("date_received");
+    for (const id of ids) {
         const field = document.getElementById(id);
-        if (canFill(field)) {
+        if (field && canFill(field)) {
             field.value = visit[id] || blankValue(id);
             filled[id] = field.value;
         }
