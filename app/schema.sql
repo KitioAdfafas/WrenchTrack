@@ -1,19 +1,11 @@
-DROP TABLE IF EXISTS photos;
-DROP TABLE IF EXISTS status_history;
-DROP TABLE IF EXISTS fault_codes;
-DROP TABLE IF EXISTS parts;
-DROP TABLE IF EXISTS notes;
-DROP TABLE IF EXISTS jobs;
-DROP TABLE IF EXISTS users;
-
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
-CREATE TABLE jobs (
+CREATE TABLE IF NOT EXISTS jobs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     customer_name TEXT NOT NULL,
     phone TEXT NOT NULL,
@@ -36,14 +28,14 @@ CREATE TABLE jobs (
     created_by INTEGER REFERENCES users (id)
 );
 
-CREATE TABLE notes (
+CREATE TABLE IF NOT EXISTS notes (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     job_id INTEGER NOT NULL REFERENCES jobs (id) ON DELETE CASCADE,
     body TEXT NOT NULL,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
-CREATE TABLE parts (
+CREATE TABLE IF NOT EXISTS parts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     job_id INTEGER NOT NULL REFERENCES jobs (id) ON DELETE CASCADE,
     name TEXT NOT NULL,
@@ -51,7 +43,24 @@ CREATE TABLE parts (
     price REAL NOT NULL DEFAULT 0
 );
 
-CREATE TABLE photos (
+CREATE TABLE IF NOT EXISTS fault_codes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    job_id INTEGER NOT NULL REFERENCES jobs (id) ON DELETE CASCADE,
+    code TEXT NOT NULL,
+    description TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS status_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    job_id INTEGER NOT NULL REFERENCES jobs (id) ON DELETE CASCADE,
+    from_status TEXT,
+    to_status TEXT NOT NULL,
+    changed_at TEXT NOT NULL DEFAULT (datetime('now')),
+    changed_by INTEGER REFERENCES users (id)
+);
+
+CREATE TABLE IF NOT EXISTS photos (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     job_id INTEGER NOT NULL REFERENCES jobs (id) ON DELETE CASCADE,
     filename TEXT NOT NULL UNIQUE,
@@ -62,6 +71,8 @@ CREATE TABLE photos (
     created_by INTEGER REFERENCES users (id)
 );
 
-CREATE INDEX idx_jobs_plate ON jobs (plate);
-CREATE INDEX idx_jobs_status ON jobs (status);
-CREATE INDEX idx_photos_job ON photos (job_id);
+CREATE INDEX IF NOT EXISTS idx_jobs_plate ON jobs (plate);
+CREATE INDEX IF NOT EXISTS idx_jobs_status ON jobs (status);
+CREATE INDEX IF NOT EXISTS idx_photos_job ON photos (job_id);
+CREATE INDEX IF NOT EXISTS idx_fault_codes_job ON fault_codes (job_id);
+CREATE INDEX IF NOT EXISTS idx_status_history_job ON status_history (job_id);

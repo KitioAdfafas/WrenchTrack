@@ -5,6 +5,11 @@ from datetime import datetime
 import click
 from flask import current_app, g
 
+# Child tables first, so no foreign key points at a dropped table.
+TABLES_CHILD_FIRST = [
+    "photos", "status_history", "fault_codes", "parts", "notes", "jobs", "users",
+]
+
 
 def get_db():
     if "db" not in g:
@@ -19,16 +24,27 @@ def close_db(e=None):
     if db is not None:
         db.close()
 
-def migrate_db():
-    """Add any missing tables and columns. Never deletes data."""
-    db = get_db()
-    with current_app.open_resource("migrations.sql") as f:
+def add_missing_column(db, table, column, definition):
+    """Add a column if the table lacks it. All arguments are fixed strings from code."""
+    columns = [row["name"] for row in db.execute(f"PRAGMA table_info({table})")]
+    if column in columns:
+        return
+    db.execute(f"ALTER TABLE {table} ADD COLUMN {column} {definition}")
+
+def run_sql_file(db, name):
+    """Run one of the bundled SQL files."""
+    with current_app.open_resource(name) as f:
         db.executescript(f.read().decode("utf8"))
 
-    columns = [row["name"] for row in db.execute("PRAGMA table_info(jobs)")]
-    if "labor_cost" not in columns:
-        db.execute("ALTER TABLE jobs ADD COLUMN labor_cost REAL NOT NULL DEFAULT 0")
-        db.commit()
+def migrate_db():
+    """Add any missing tables, indexes and columns. Never deletes data, safe to run repeatedly."""
+    db = get_db()
+    run_sql_file(db, "schema.sql")
+    add_missing_column(db, "jobs", "labor_cost", "REAL NOT NULL DEFAULT 0")
+    # Plain TEXT: SQLite refuses a datetime('now') default in ALTER TABLE.
+    add_missing_column(db, "jobs", "status_changed_at", "TEXT")
+    run_sql_file(db, "migrations.sql")
+    db.commit()
 
 def backup_target(prefix, extension):
     """Return a new timestamped file path in instance/backups, creating the folder."""
@@ -38,9 +54,11 @@ def backup_target(prefix, extension):
     return os.path.join(backups, f"{prefix}_{stamp}.{extension}")
 
 def init_db():
+    """Drop every table, then build a fresh database."""
     db = get_db()
-    with current_app.open_resource("schema.sql") as f:
-        db.executescript(f.read().decode("utf8"))
+    for name in TABLES_CHILD_FIRST:
+        db.execute("DROP TABLE IF EXISTS " + name)
+    db.commit()
     migrate_db()
 
 

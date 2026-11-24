@@ -194,10 +194,11 @@ def new():
             params["created_by"] = g.user["id"]
             cursor = db.execute(
                 "INSERT INTO jobs (customer_name, phone, make, model, year, plate, "
-                "vin, mileage, engine, fuel_type, problem, date_received, status, created_by) "
+                "vin, mileage, engine, fuel_type, problem, date_received, status, "
+                "status_changed_at, created_by) "
                 "VALUES (:customer_name, :phone, :make, :model, :year, :plate, "
                 ":vin, :mileage, :engine, :fuel_type, :problem, :date_received, "
-                ":status, :created_by)",
+                ":status, datetime('now'), :created_by)",
                 params,
             )
             job_id = cursor.lastrowid
