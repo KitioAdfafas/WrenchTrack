@@ -1,18 +1,27 @@
 import io
 import os
 import re
+import sqlite3
 import unicodedata
+import zipfile
 
-from flask import current_app
+import click
+from flask import current_app, flash, g, request
 from PIL import Image, ImageOps
 from pillow_heif import register_heif_opener
 
+from .db import backup_target
+from .status import STATUSES
+
 register_heif_opener()
 
-ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".heic", ".heif"}
+ALLOWED_EXTENSIONS = (".jpg", ".jpeg", ".png", ".heic", ".heif")
+PHOTO_ACCEPT = ",".join(ALLOWED_EXTENSIONS) + ",image/*"
 IMAGE_FORMATS = ["JPEG", "PNG", "HEIF"]
 READ_ERRORS = (OSError, ValueError, Image.DecompressionBombError)
 NOT_A_PHOTO = "That file could not be read as a photo."
+
+PHOTO_STAGES = ["before", "after"]
 
 def read_photo(file):
     """Open an uploaded file as an image. Returns (image, error)."""
@@ -94,3 +103,70 @@ def save_photo(data, job):
             return filename
         except FileExistsError:
             number += 1
+
+def default_photo_stage(status):
+    """Before until the repair starts, After from then on."""
+    if STATUSES.index(status) < STATUSES.index("Repairing"):
+        return "before"
+    return "after"
+
+def ask_for_photos_again():
+    """Remind the user when the form comes back after photos were chosen."""
+    if any(file.filename for file in request.files.getlist("photos")):
+        flash("Please choose the photos again.")
+
+def read_photos():
+    """Check every chosen photo. Return (photos, error)."""
+    files = [file for file in request.files.getlist("photos") if file.filename]
+    names = request.form.getlist("photo_names")
+
+    photos = []
+    for position, file in enumerate(files):
+        name = names[position].strip() if position < len(names) else ""
+        if len(name) > 100:
+            return [], f"{file.filename}: A photo name can be at most 100 characters."
+
+        data, error = prepare_photo(file)
+        if error:
+            return [], f"{file.filename}: {error}"
+        photos.append((data, name))
+
+    return photos, None
+
+def save_job_photos(db, job, photos, stage):
+    """Save the photos without committing. Written files are removed on failure."""
+    written = []
+    try:
+        for data, name in photos:
+            filename = save_photo(data, job)
+            written.append(filename)
+            db.execute(
+                "INSERT INTO photos (job_id, filename, name, stage, created_by) "
+                "VALUES (?, ?, ?, ?, ?)",
+                (job["id"], filename, name or None, stage, g.user["id"]),
+            )
+    except (OSError, sqlite3.Error):
+        for filename in written:
+            remove_photo_file(filename)
+        raise
+
+@click.command("backup-photos")
+def backup_photos_command():
+    """Save every photo into one zip file in instance/backups."""
+    folder = photo_folder()
+    photos = sorted(os.listdir(folder)) if os.path.isdir(folder) else []
+    if not photos:
+        click.echo("There are no photos to back up.")
+        return
+
+    target = backup_target("photos", "zip")
+    with zipfile.ZipFile(target, "w", zipfile.ZIP_STORED) as archive:
+        for name in photos:
+            archive.write(os.path.join(folder, name), arcname=name)
+
+    click.echo(f"Backup saved: {target}")
+
+def init_app(app):
+    """Add the photo backup command and the accepted upload types for templates."""
+    app.cli.add_command(backup_photos_command)
+    app.jinja_env.globals["photo_accept"] = PHOTO_ACCEPT

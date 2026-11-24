@@ -1,7 +1,6 @@
 import csv
 import io
 import json
-import sqlite3
 from datetime import date
 from pathlib import Path
 
@@ -19,7 +18,15 @@ from flask import (
 )
 
 from .db import get_db
-from .photos import photo_folder, prepare_photo, remove_photo_file, save_photo
+from .photos import (
+    PHOTO_STAGES,
+    ask_for_photos_again,
+    default_photo_stage,
+    photo_folder,
+    read_photos,
+    remove_photo_file,
+    save_job_photos,
+)
 from .search import find_related_jobs, job_matches
 from .shop import localtime, money, shop_now, shop_today, utc_text
 from .status import LAST_STATUS, STATUSES, is_stuck, next_status
@@ -27,8 +34,6 @@ from .status import LAST_STATUS, STATUSES, is_stuck, next_status
 bp = Blueprint("jobs", __name__, url_prefix="/jobs")
 
 FUEL_TYPES = ["petrol", "diesel", "hybrid", "electric"]
-
-PHOTO_STAGES = ["before", "after"]
 
 def load_car_models():
     """Read app/data/car-list.json into {make: [models]}. Empty if the file is missing."""
@@ -77,12 +82,6 @@ LAST_VISIT_FIELDS = [
     "fuel_type",
     "date_received",
 ]
-
-def default_photo_stage(status):
-    """Before until the repair starts, After from then on."""
-    if STATUSES.index(status) < STATUSES.index("Repairing"):
-        return "before"
-    return "after"
 
 def get_job_or_404(job_id):
     job = get_db().execute(
@@ -228,47 +227,6 @@ def index():
         statuses=STATUSES,
     )
 
-def ask_for_photos_again():
-    """Remind the user when the form comes back after photos were chosen."""
-    if any(file.filename for file in request.files.getlist("photos")):
-        flash("Please choose the photos again.")
-
-def read_photos():
-    """Check every chosen photo. Return (photos, error)."""
-    files = [file for file in request.files.getlist("photos") if file.filename]
-    names = request.form.getlist("photo_names")
-
-    photos = []
-    for position, file in enumerate(files):
-        name = names[position].strip() if position < len(names) else ""
-        if len(name) > 100:
-            return [], f"{file.filename}: A photo name can be at most 100 characters."
-
-        data, error = prepare_photo(file)
-        if error:
-            return [], f"{file.filename}: {error}"
-        photos.append((data, name))
-
-    return photos, None
-
-def save_job_photos(db, job, photos, stage):
-    """Save the photos and commit. Written files are removed on failure."""
-    written = []
-    try:
-        for data, name in photos:
-            filename = save_photo(data, job)
-            written.append(filename)
-            db.execute(
-                "INSERT INTO photos (job_id, filename, name, stage, created_by) "
-                "VALUES (?, ?, ?, ?, ?)",
-                (job["id"], filename, name or None, stage, g.user["id"]),
-            )
-        db.commit()
-    except (OSError, sqlite3.Error):
-        for filename in written:
-            remove_photo_file(filename)
-        raise
-
 def render_job_form(form, editing=False, related=None):
     """Show the job form, for a new job or for editing one."""
     return render_template(
@@ -310,6 +268,7 @@ def new():
             job_id = cursor.lastrowid
             record_status(db, job_id, None, STATUSES[0])
             save_job_photos(db, get_job_or_404(job_id), photos, "before")
+            db.commit()
             flash("Job saved.", "ok")
             return redirect(url_for("jobs.detail", job_id=job_id))
 
@@ -573,7 +532,9 @@ def add_photo(job_id):
         flash(error)
         ask_for_photos_again()
     else:
-        save_job_photos(get_db(), job, photos, stage)
+        db = get_db()
+        save_job_photos(db, job, photos, stage)
+        db.commit()
         if len(photos) == 1:
             flash("Photo added.", "ok")
         else:

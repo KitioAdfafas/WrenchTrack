@@ -124,7 +124,7 @@
     <form method="post" enctype="multipart/form-data" action="{{ url_for('jobs.add_photo', job_id=job['id']) }}">
         {{ csrf_field() }}
         <label for="photos">Photos</label>
-        <input type="file" name="photos" id="photos" accept=".jpg,.jpeg,.png,.heic,.heif,image/*" multiple required>
+        <input type="file" name="photos" id="photos" accept="{{ photo_accept }}" multiple required>
         <div id="photo-boxes"></div>
 
         <label><input type="radio" name="stage" value="before" {% if photo_stage == "before" %}checked{% endif %}> Before</label>

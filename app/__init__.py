@@ -4,7 +4,7 @@ from flask import Flask, redirect, render_template, url_for
 from flask_wtf.csrf import CSRFProtect, generate_csrf
 from markupsafe import Markup
 
-from . import auth, db, jobs, shop, status
+from . import auth, db, jobs, photos, shop, status
 
 csrf = CSRFProtect()
 
@@ -38,6 +38,7 @@ def create_app():
 
     db.init_app(app)
     auth.init_app(app)
+    photos.init_app(app)
     shop.init_app(app)
     status.init_app(app)
     app.register_blueprint(jobs.bp)
