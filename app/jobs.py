@@ -102,6 +102,7 @@ def is_local_path(target):
         target.startswith("/")
         and not target.startswith("//")
         and "\\" not in target
+        and target.isprintable()
     )
 
 def ready_message(job, total):
