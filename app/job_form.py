@@ -42,6 +42,8 @@ NUMBER_FIELDS = ["year", "mileage"]
 
 UPPERCASE_FIELDS = ["plate", "vin"]
 
+LAST_VISIT_FIELDS = [field for field in JOB_FIELDS if field not in ("plate", "mileage", "problem")]
+
 def read_job_form(form):
     """Clean the submitted form. Returns (values, error). error is None if valid."""
     values = {}

@@ -18,6 +18,7 @@ from .export import DELIMITERS, export_csv_bytes, find_export_jobs
 from .job_form import (
     CAR_MODELS,
     FUEL_TYPES,
+    LAST_VISIT_FIELDS,
     job_params,
     read_job_form,
 )
@@ -26,14 +27,15 @@ from .limits import (
     MAX_CODE,
     MAX_DESCRIPTION,
     MAX_PART_NAME,
-    MAX_PHOTO_NAME,
     MAX_QUANTITY,
 )
 from .photos import (
     PHOTO_STAGES,
     ask_for_photos_again,
     default_photo_stage,
+    job_photos,
     photo_folder,
+    photo_name_error,
     read_photos,
     remove_photo_file,
     save_job_photos,
@@ -50,18 +52,6 @@ from .shop import (
 from .status import LAST_STATUS, STATUSES, is_stuck, next_status
 
 bp = Blueprint("jobs", __name__, url_prefix="/jobs")
-
-LAST_VISIT_FIELDS = [
-    "customer_name",
-    "phone",
-    "make",
-    "model",
-    "year",
-    "vin",
-    "engine",
-    "fuel_type",
-    "date_received",
-]
 
 def get_job_or_404(job_id):
     job = get_db().execute(
@@ -203,7 +193,7 @@ def new():
             )
             job_id = cursor.lastrowid
             record_status(db, job_id, None, STATUSES[0])
-            save_job_photos(db, get_job_or_404(job_id), photos, "before")
+            save_job_photos(db, get_job_or_404(job_id), photos, PHOTO_STAGES[0])
             db.commit()
             flash("Job saved.", "ok")
             return redirect(url_for("jobs.detail", job_id=job_id))
@@ -213,7 +203,7 @@ def new():
         form = values
     else:
         form = {
-            "fuel_type": "petrol",
+            "fuel_type": FUEL_TYPES[0],
             "date_received": shop_today().isoformat(),
         }
 
@@ -255,14 +245,7 @@ def detail(job_id):
         (job_id,),
     ).fetchall()
 
-    photos = get_db().execute(
-        "SELECT p.id, p.name, p.stage, p.created_at, u.username "
-        "FROM photos p LEFT JOIN users u ON u.id = p.created_by "
-        "WHERE p.job_id = ? ORDER BY p.id",
-        (job_id,),
-    ).fetchall()
-    before_photos = [photo for photo in photos if photo["stage"] == "before"]
-    after_photos = [photo for photo in photos if photo["stage"] == "after"]
+    before_photos, after_photos = job_photos(job_id)
 
     related_count = len(find_related_jobs(job["plate"], job["vin"], exclude_id=job_id))
     ready_text = ready_message(job, total) if job["status"] == "Ready" else None
@@ -502,8 +485,9 @@ def rename_photo(job_id, photo_id):
     get_job_or_404(job_id)
     name = request.form.get("name", "").strip()
 
-    if len(name) > MAX_PHOTO_NAME:
-        flash(f"A photo name can be at most {MAX_PHOTO_NAME} characters.")
+    error = photo_name_error(name)
+    if error:
+        flash(error)
     else:
         db = get_db()
         cursor = db.execute(

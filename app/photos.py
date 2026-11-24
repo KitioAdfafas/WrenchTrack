@@ -10,7 +10,7 @@ from flask import current_app, flash, g, request
 from PIL import Image, ImageOps
 from pillow_heif import register_heif_opener
 
-from .db import backup_target
+from .db import backup_target, get_db
 from .limits import MAX_PHOTO_NAME
 from .status import STATUSES
 
@@ -116,6 +116,24 @@ def ask_for_photos_again():
     if any(file.filename for file in request.files.getlist("photos")):
         flash("Please choose the photos again.")
 
+def job_photos(job_id):
+    """All photos on a job, oldest first. Returns (before_photos, after_photos)."""
+    photos = get_db().execute(
+        "SELECT p.id, p.name, p.stage, p.created_at, u.username "
+        "FROM photos p LEFT JOIN users u ON u.id = p.created_by "
+        "WHERE p.job_id = ? ORDER BY p.id",
+        (job_id,),
+    ).fetchall()
+    before_photos = [photo for photo in photos if photo["stage"] == PHOTO_STAGES[0]]
+    after_photos = [photo for photo in photos if photo["stage"] == PHOTO_STAGES[1]]
+    return before_photos, after_photos
+
+def photo_name_error(name):
+    """The error for a photo name that is too long, or None."""
+    if len(name) > MAX_PHOTO_NAME:
+        return f"A photo name can be at most {MAX_PHOTO_NAME} characters."
+    return None
+
 def read_photos():
     """Check every chosen photo. Return (photos, error)."""
     files = [file for file in request.files.getlist("photos") if file.filename]
@@ -124,8 +142,9 @@ def read_photos():
     photos = []
     for position, file in enumerate(files):
         name = names[position].strip() if position < len(names) else ""
-        if len(name) > MAX_PHOTO_NAME:
-            return [], f"{file.filename}: A photo name can be at most {MAX_PHOTO_NAME} characters."
+        error = photo_name_error(name)
+        if error:
+            return [], f"{file.filename}: {error}"
 
         data, error = prepare_photo(file)
         if error:
