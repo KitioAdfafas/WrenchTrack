@@ -1,5 +1,3 @@
-import csv
-import io
 import json
 from datetime import date
 from pathlib import Path
@@ -18,6 +16,7 @@ from flask import (
 )
 
 from .db import get_db
+from .export import DELIMITERS, export_csv_bytes, find_export_jobs
 from .photos import (
     PHOTO_STAGES,
     ask_for_photos_again,
@@ -28,7 +27,14 @@ from .photos import (
     save_job_photos,
 )
 from .search import find_related_jobs, job_matches
-from .shop import localtime, money, shop_now, shop_today, utc_text
+from .shop import (
+    PARTS_TOTAL_SQL,
+    job_total,
+    money,
+    shop_now,
+    shop_today,
+    utc_text,
+)
 from .status import LAST_STATUS, STATUSES, is_stuck, next_status
 
 bp = Blueprint("jobs", __name__, url_prefix="/jobs")
@@ -91,8 +97,6 @@ def get_job_or_404(job_id):
         abort(404)
     return job
 
-PARTS_TOTAL_SQL = "COALESCE(SUM(p.quantity * p.price), 0) AS parts_total"
-
 def job_parts(job_id):
     """All parts on a job, oldest first."""
     return get_db().execute(
@@ -107,10 +111,6 @@ def job_fault_codes(job_id):
         "WHERE job_id = ? ORDER BY id",
         (job_id,),
     ).fetchall()
-
-def job_total(parts_total, labor_cost):
-    """The one total rule: parts plus labor, rounded to cents."""
-    return round(parts_total + labor_cost, 2)
 
 def calculate_totals(job, parts):
     """Return (parts_total, total), calculated from the stored rows."""
@@ -646,15 +646,6 @@ def previous_repairs(job_id):
     related = find_related_jobs(job["plate"], job["vin"], exclude_id=job_id)
     return render_template("jobs/previous.html", job=job, related=related)
 
-DELIMITERS = {"semicolon": ";", "comma": ","}
-
-def csv_safe(value):
-    """Stop Excel from running customer-typed text as a formula."""
-    text = "" if value is None else str(value)
-    if text and text[0] in ("=", "+", "-", "@", "\t", "\r"):
-        return "'" + text
-    return text
-
 @bp.route("/export")
 def export():
     return render_template("jobs/export.html")
@@ -675,62 +666,10 @@ def export_csv():
         flash("The start date must not be after the end date.")
         return redirect(url_for("jobs.export"))
 
-    conditions = []
-    params = []
-    if start:
-        conditions.append("j.date_received >= ?")
-        params.append(start.isoformat())
-    if end:
-        conditions.append("j.date_received <= ?")
-        params.append(end.isoformat())
-
-    sql = (
-        "SELECT j.*, " + PARTS_TOTAL_SQL + " "
-        "FROM jobs j LEFT JOIN parts p ON p.job_id = j.id"
-    )
-    if conditions:
-        sql += " WHERE " + " AND ".join(conditions)
-    sql += " GROUP BY j.id ORDER BY j.date_received, j.id"
-    rows = get_db().execute(sql, params).fetchall()
-
-    def csv_money(value):
-        text = f"{value:.2f}"
-        return text.replace(".", ",") if delimiter == ";" else text
-
-    output = io.StringIO()
-    writer = csv.writer(output, delimiter=delimiter)
-    writer.writerow([
-        "id", "date_received", "plate", "customer", "phone", "make", "model",
-        "year", "vin", "mileage", "engine", "fuel_type", "problem", "status",
-        "last_status_change", "parts_total", "labor_cost", "total",
-    ])
-    for row in rows:
-        parts_total = round(row["parts_total"], 2)
-        total = job_total(parts_total, row["labor_cost"])
-        writer.writerow([
-            row["id"],
-            row["date_received"],
-            csv_safe(row["plate"]),
-            csv_safe(row["customer_name"]),
-            csv_safe(row["phone"]),
-            csv_safe(row["make"]),
-            csv_safe(row["model"]),
-            row["year"],
-            csv_safe(row["vin"]),
-            row["mileage"],
-            csv_safe(row["engine"]),
-            row["fuel_type"],
-            csv_safe(row["problem"]),
-            row["status"],
-            localtime(row["status_changed_at"]),
-            csv_money(parts_total),
-            csv_money(row["labor_cost"]),
-            csv_money(total),
-        ])
-
-    filename = f"wrenchtrack_jobs_{date.today().isoformat()}.csv"
+    rows = find_export_jobs(start, end)
+    filename = f"wrenchtrack_jobs_{shop_today().isoformat()}.csv"
     return Response(
-        output.getvalue().encode("utf-8-sig"),
+        export_csv_bytes(rows, delimiter),
         mimetype="text/csv",
         headers={"Content-Disposition": f"attachment; filename={filename}"},
     )

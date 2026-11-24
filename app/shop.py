@@ -53,6 +53,12 @@ def money(value):
         return text
     return f"{text} {currency}"
 
+PARTS_TOTAL_SQL = "COALESCE(SUM(p.quantity * p.price), 0) AS parts_total"
+
+def job_total(parts_total, labor_cost):
+    """The one total rule: parts plus labor, rounded to cents."""
+    return round(parts_total + labor_cost, 2)
+
 def init_app(app):
     """Make the time and money helpers usable in every template."""
     app.add_template_filter(localtime)
