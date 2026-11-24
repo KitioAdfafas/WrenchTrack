@@ -17,6 +17,14 @@ from flask import (
 
 from .db import get_db
 from .export import DELIMITERS, export_csv_bytes, find_export_jobs
+from .limits import (
+    MAX_AMOUNT,
+    MAX_CODE,
+    MAX_DESCRIPTION,
+    MAX_PART_NAME,
+    MAX_PHOTO_NAME,
+    MAX_QUANTITY,
+)
 from .photos import (
     PHOTO_STAGES,
     ask_for_photos_again,
@@ -124,6 +132,13 @@ def record_status(db, job_id, from_status, to_status):
         "VALUES (?, ?, ?, ?)",
         (job_id, from_status, to_status, g.user["id"]),
     )
+
+def read_amount(text):
+    """Read a money amount, allowing a comma as the decimal mark. None if it is not a number."""
+    try:
+        return float(text.strip().replace(",", "."))
+    except ValueError:
+        return None
 
 def is_local_path(target):
     """True only for an address on this site."""
@@ -422,10 +437,10 @@ def add_fault_code(job_id):
 
     if not code:
         flash("A fault code cannot be empty.")
-    elif len(code) > 20:
-        flash("A fault code can be at most 20 characters.")
-    elif len(description) > 200:
-        flash("The description can be at most 200 characters.")
+    elif len(code) > MAX_CODE:
+        flash(f"A fault code can be at most {MAX_CODE} characters.")
+    elif len(description) > MAX_DESCRIPTION:
+        flash(f"The description can be at most {MAX_DESCRIPTION} characters.")
     else:
         db = get_db()
         exists = db.execute(
@@ -466,24 +481,25 @@ def add_part(job_id):
     get_job_or_404(job_id)
     name = request.form.get("name", "").strip()
     quantity_text = request.form.get("quantity", "").strip()
-    price_text = request.form.get("price", "").strip()
+    price_text = request.form.get("price", "")
 
     error = None
     if not name:
         error = "A part needs a name."
-    elif len(name) > 100:
-        error = "The part name can be at most 100 characters."
+    elif len(name) > MAX_PART_NAME:
+        error = f"The part name can be at most {MAX_PART_NAME} characters."
     else:
         try:
             quantity = int(quantity_text)
-            price = float(price_text.replace(",", "."))
         except ValueError:
+            quantity = None
+        price = read_amount(price_text)
+        if quantity is None or price is None:
             error = "Quantity must be a whole number and price must be a number."
-        else:
-            if not 1 <= quantity <= 1000:
-                error = "Quantity must be between 1 and 1000."
-            elif not 0 <= price <= 100000:
-                error = "Price must be between 0 and 100000."
+        elif not 1 <= quantity <= MAX_QUANTITY:
+            error = f"Quantity must be between 1 and {MAX_QUANTITY}."
+        elif not 0 <= price <= MAX_AMOUNT:
+            error = f"Price must be between 0 and {MAX_AMOUNT}."
 
     if error:
         flash(error)
@@ -565,8 +581,8 @@ def rename_photo(job_id, photo_id):
     get_job_or_404(job_id)
     name = request.form.get("name", "").strip()
 
-    if len(name) > 100:
-        flash("A photo name can be at most 100 characters.")
+    if len(name) > MAX_PHOTO_NAME:
+        flash(f"A photo name can be at most {MAX_PHOTO_NAME} characters.")
     else:
         db = get_db()
         cursor = db.execute(
@@ -604,15 +620,10 @@ def delete_photo(job_id, photo_id):
 @bp.route("/<int:job_id>/labor", methods=("POST",))
 def set_labor(job_id):
     get_job_or_404(job_id)
-    labor_text = request.form.get("labor_cost", "").strip()
+    labor_cost = read_amount(request.form.get("labor_cost", ""))
 
-    try:
-        labor_cost = float(labor_text.replace(",", "."))
-    except ValueError:
-        labor_cost = None
-
-    if labor_cost is None or not 0 <= labor_cost <= 100000:
-        flash("Labor cost must be a number between 0 and 100000.")
+    if labor_cost is None or not 0 <= labor_cost <= MAX_AMOUNT:
+        flash(f"Labor cost must be a number between 0 and {MAX_AMOUNT}.")
     else:
         db = get_db()
         db.execute(

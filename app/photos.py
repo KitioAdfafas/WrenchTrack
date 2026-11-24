@@ -11,6 +11,7 @@ from PIL import Image, ImageOps
 from pillow_heif import register_heif_opener
 
 from .db import backup_target
+from .limits import MAX_PHOTO_NAME
 from .status import STATUSES
 
 register_heif_opener()
@@ -123,8 +124,8 @@ def read_photos():
     photos = []
     for position, file in enumerate(files):
         name = names[position].strip() if position < len(names) else ""
-        if len(name) > 100:
-            return [], f"{file.filename}: A photo name can be at most 100 characters."
+        if len(name) > MAX_PHOTO_NAME:
+            return [], f"{file.filename}: A photo name can be at most {MAX_PHOTO_NAME} characters."
 
         data, error = prepare_photo(file)
         if error:
