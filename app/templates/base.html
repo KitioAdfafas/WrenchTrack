@@ -11,14 +11,16 @@
     <nav class="topbar">
         <a class="brand" href="{{ url_for('home') }}">WrenchTrack</a>
         {% if g.user %}
-            <a href="{{ url_for('jobs.dashboard') }}"
-                {% if request.endpoint == 'jobs.dashboard' %}aria-current="page"{% endif %}>Dashboard</a>
-            <a href="{{ url_for('jobs.index') }}"
-                {% if request.endpoint == 'jobs.index' %}aria-current="page"{% endif %}>Jobs</a>
-            <a href="{{ url_for('jobs.new') }}"
-                {% if request.endpoint == 'jobs.new' %}aria-current="page"{% endif %}>New job</a>
+            <span class="nav">
+                <a href="{{ url_for('jobs.dashboard') }}"
+                    {% if request.endpoint == 'jobs.dashboard' %}aria-current="page"{% endif %}>Dashboard</a>
+                <a href="{{ url_for('jobs.index') }}"
+                    {% if request.endpoint == 'jobs.index' %}aria-current="page"{% endif %}>Jobs</a>
+                <a href="{{ url_for('jobs.new') }}"
+                    {% if request.endpoint == 'jobs.new' %}aria-current="page"{% endif %}>New job</a>
+            </span>
             <span class="who">
-                {{ g.user["username"] }}
+                <span class="who-name">{{ g.user["username"] }}</span>
                 <form class="inline-form" method="post" action="{{ url_for('auth.logout') }}">
                     {{ csrf_field() }}
                     <button type="submit">Log out</button>

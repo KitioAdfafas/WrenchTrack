@@ -162,6 +162,10 @@ small {
     text-transform: uppercase;
 }
 
+.nav {
+    display: flex;
+}
+
 .who {
     display: flex;
     align-items: center;
@@ -750,6 +754,45 @@ main.wide {
 }
 
 @media (max-width: 40rem) {
+    .topbar {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    .topbar .brand {
+        grid-row: 1;
+        grid-column: 1;
+        min-height: 48px;
+        font-size: 1.125rem;
+    }
+
+    .who {
+        grid-row: 1;
+        grid-column: 2;
+        min-width: 0;
+    }
+
+    .who-name {
+        min-width: 0;
+        max-width: 6.5rem;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .nav {
+        grid-row: 2;
+        grid-column: 1 / -1;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .nav a {
+        justify-content: center;
+        min-height: 44px;
+        padding: 0;
+    }
+
     .sectors span {
         white-space: nowrap;
     }
