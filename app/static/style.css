@@ -739,7 +739,8 @@ main.wide {
     font-size: 1.375rem;
     font-style: italic;
     font-weight: 900;
-    overflow-wrap: anywhere;
+    line-height: 1.15;
+    overflow-wrap: normal;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -795,5 +796,13 @@ main.wide {
 
     .facts {
         grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .month div {
+        padding: 1.125rem 1.5rem;
+    }
+
+    .month dd {
+        font-size: 1.625rem;
     }
 }
